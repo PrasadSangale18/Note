@@ -1,491 +1,402 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Plus, X, Check, Flame, Brain, Heart, Star, TrendingUp,
-  ChevronLeft, ChevronRight, Menu, FileText, GitBranch,
-  LayoutDashboard, Pin, PinOff, Trash2, Edit3, Save,
-  ChevronDown, ChevronRight as CR, Circle, LogOut, User,
-  Search, Palette, Bold, Italic, List, Type, Minus, BookOpen
-} from "lucide-react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>PRASAD — Life OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { background: #07070f; overflow: hidden; }
+    select option { background: #111126; color: #e0e0f0; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    input, textarea, select, button { font-family: 'Outfit', sans-serif; }
+    input::placeholder, textarea::placeholder { color: #404060; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
 
-const FONT_URL = "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap";
+/* ── ICON SYSTEM ── */
+const Ic = ({size=24,color="currentColor",sw=2,children}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+);
+const Plus     = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ic>;
+const X        = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Ic>;
+const Check    = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="20 6 9 17 4 12"/></Ic>;
+const ChevronLeft=({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="15 18 9 12 15 6"/></Ic>;
+const ChevronRight=({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="9 18 15 12 9 6"/></Ic>;
+const CR       = ChevronRight;
+const ChevronDown=({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="6 9 12 15 18 9"/></Ic>;
+const Menu     = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></Ic>;
+const Search   = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Ic>;
+const Minus    = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="5" y1="12" x2="19" y2="12"/></Ic>;
+const Flame    = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></Ic>;
+const Brain    = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.77-3.58 4 4 0 0 1 0-6.92 2.5 2.5 0 0 1 1.77-3.58A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.77-3.58 4 4 0 0 0 0-6.92 2.5 2.5 0 0 0-1.77-3.58A2.5 2.5 0 0 0 14.5 2Z"/></Ic>;
+const Heart    = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></Ic>;
+const Star     = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></Ic>;
+const TrendingUp=({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Ic>;
+const FileText = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></Ic>;
+const GitBranch= ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></Ic>;
+const LayoutDashboard=({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></Ic>;
+const Pin      = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V16a2 2 0 0 0-1.11-1.79L16 13.21A2 2 0 0 1 15 11.35V6H9v5.35a2 2 0 0 1-1 1.86L6.11 14.2A2 2 0 0 0 5 16Z"/><line x1="9" y1="6" x2="15" y2="6"/></Ic>;
+const Trash2   = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></Ic>;
+const Save     = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Ic>;
+const LogOut   = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></Ic>;
+const User     = ({size=24,color="currentColor",strokeWidth:sw=2})=><Ic size={size} color={color} sw={sw}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Ic>;
 
-// ─── CONSTANTS ────────────────────────────────────────────────
+/* ── CONSTANTS ── */
 const PILLARS = [
-  { id: "physical",   name: "Physical",   subtitle: "The Foundation",       Icon: Flame,      color: "#00d97e", glow: "rgba(0,217,126,0.22)",  bg: "rgba(0,217,126,0.07)"  },
-  { id: "mental",     name: "Mental",     subtitle: "The Operating System",  Icon: Brain,      color: "#4d9eff", glow: "rgba(77,158,255,0.22)",  bg: "rgba(77,158,255,0.07)" },
-  { id: "relational", name: "Relational", subtitle: "The Support Structure", Icon: Heart,      color: "#ff4d7e", glow: "rgba(255,77,126,0.22)",  bg: "rgba(255,77,126,0.07)" },
-  { id: "spiritual",  name: "Spiritual",  subtitle: "The Compass",           Icon: Star,       color: "#b57bff", glow: "rgba(181,123,255,0.22)", bg: "rgba(181,123,255,0.07)"},
-  { id: "financial",  name: "Financial",  subtitle: "The Amplifier",         Icon: TrendingUp, color: "#fbbf24", glow: "rgba(251,191,36,0.22)",  bg: "rgba(251,191,36,0.07)" },
+  {id:"physical",  name:"Physical",  subtitle:"The Foundation",      Icon:Flame,      color:"#00d97e",glow:"rgba(0,217,126,0.22)",  bg:"rgba(0,217,126,0.07)" },
+  {id:"mental",    name:"Mental",    subtitle:"The Operating System", Icon:Brain,      color:"#4d9eff",glow:"rgba(77,158,255,0.22)",  bg:"rgba(77,158,255,0.07)"},
+  {id:"relational",name:"Relational",subtitle:"The Support Structure",Icon:Heart,      color:"#ff4d7e",glow:"rgba(255,77,126,0.22)",  bg:"rgba(255,77,126,0.07)"},
+  {id:"spiritual", name:"Spiritual", subtitle:"The Compass",          Icon:Star,       color:"#b57bff",glow:"rgba(181,123,255,0.22)", bg:"rgba(181,123,255,0.07)"},
+  {id:"financial", name:"Financial", subtitle:"The Amplifier",        Icon:TrendingUp, color:"#fbbf24",glow:"rgba(251,191,36,0.22)",  bg:"rgba(251,191,36,0.07)"},
 ];
 const QUADRANTS = [
-  { id: "do",       name: "DO",       label: "Urgent & Important",         hint: "Tackle immediately ⚡", color: "#00d97e", bg: "rgba(0,217,126,0.07)",  border: "rgba(0,217,126,0.22)"  },
-  { id: "decide",   name: "DECIDE",   label: "Important, Not Urgent",      hint: "Schedule for later 📅", color: "#4d9eff", bg: "rgba(77,158,255,0.07)", border: "rgba(77,158,255,0.22)" },
-  { id: "delegate", name: "DELEGATE", label: "Urgent, Not Important",      hint: "Assign to others 👥",   color: "#fbbf24", bg: "rgba(251,191,36,0.07)", border: "rgba(251,191,36,0.22)" },
-  { id: "delete",   name: "DELETE",   label: "Not Urgent & Not Important", hint: "Eliminate entirely 🗑️", color: "#ff4d7e", bg: "rgba(255,77,126,0.07)", border: "rgba(255,77,126,0.22)" },
+  {id:"do",      name:"DO",      label:"Urgent & Important",        hint:"Tackle immediately ⚡",color:"#00d97e",bg:"rgba(0,217,126,0.07)", border:"rgba(0,217,126,0.22)" },
+  {id:"decide",  name:"DECIDE",  label:"Important, Not Urgent",     hint:"Schedule for later 📅",color:"#4d9eff",bg:"rgba(77,158,255,0.07)",border:"rgba(77,158,255,0.22)"},
+  {id:"delegate",name:"DELEGATE",label:"Urgent, Not Important",     hint:"Assign to others 👥",  color:"#fbbf24",bg:"rgba(251,191,36,0.07)",border:"rgba(251,191,36,0.22)"},
+  {id:"delete",  name:"DELETE",  label:"Not Urgent & Not Important",hint:"Eliminate entirely 🗑️",color:"#ff4d7e",bg:"rgba(255,77,126,0.07)",border:"rgba(255,77,126,0.22)"},
 ];
 const NOTE_COLORS = [
-  { id: "default", bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.08)", label: "Default" },
-  { id: "green",   bg: "rgba(0,217,126,0.08)",   border: "rgba(0,217,126,0.25)",   label: "Green"   },
-  { id: "blue",    bg: "rgba(77,158,255,0.08)",  border: "rgba(77,158,255,0.25)",  label: "Blue"    },
-  { id: "purple",  bg: "rgba(181,123,255,0.08)", border: "rgba(181,123,255,0.25)", label: "Purple"  },
-  { id: "yellow",  bg: "rgba(251,191,36,0.08)",  border: "rgba(251,191,36,0.25)",  label: "Yellow"  },
-  { id: "red",     bg: "rgba(255,77,126,0.08)",  border: "rgba(255,77,126,0.25)",  label: "Red"     },
+  {id:"default",bg:"rgba(255,255,255,0.03)",border:"rgba(255,255,255,0.08)"},
+  {id:"green",  bg:"rgba(0,217,126,0.08)",  border:"rgba(0,217,126,0.25)" },
+  {id:"blue",   bg:"rgba(77,158,255,0.08)", border:"rgba(77,158,255,0.25)"},
+  {id:"purple", bg:"rgba(181,123,255,0.08)",border:"rgba(181,123,255,0.25)"},
+  {id:"yellow", bg:"rgba(251,191,36,0.08)", border:"rgba(251,191,36,0.25)"},
+  {id:"red",    bg:"rgba(255,77,126,0.08)", border:"rgba(255,77,126,0.25)"},
 ];
-const NOTE_CATEGORIES = ["All", "Study", "Career", "Health", "Ideas", "Personal", "Finance", "Other"];
+const NOTE_CATS = ["All","Study","Career","Health","Ideas","Personal","Finance","Other"];
+const SECTIONS  = [
+  {id:"tasks",  label:"Dashboard",Icon:LayoutDashboard,color:"#4d9eff"},
+  {id:"notes",  label:"Notes",    Icon:FileText,       color:"#00d97e"},
+  {id:"mindmap",label:"Mind Map", Icon:GitBranch,      color:"#b57bff"},
+];
 
 const DEFAULT_TASKS = {
-  physical: {
-    do: [
-      { id: 1, text: "Buy Ketoconazole 2% shampoo (dandruff fix — start TODAY)", done: false },
-      { id: 2, text: "Book urologist appointment for varicocele", done: false },
-      { id: 3, text: "Book eye exam (weak eyesight + red veins during pushups)", done: false },
-      { id: 4, text: "Sleep 7+ hours tonight — zero compromise", done: false },
+  physical:{
+    do:[
+      {id:1, text:"Buy Ketoconazole 2% shampoo (dandruff fix — start TODAY)",done:false},
+      {id:2, text:"Book urologist appointment for varicocele",done:false},
+      {id:3, text:"Book eye exam (weak eyesight + red veins during pushups)",done:false},
+      {id:4, text:"Sleep 7+ hours tonight — zero compromise",done:false},
     ],
-    decide: [
-      { id: 5, text: "Build daily workout: 20min run + chest + forearms", done: false },
-      { id: 6, text: "Plan protein-rich meal every day (eggs, dal, paneer)", done: false },
-      { id: 7, text: "Fix posture while coding — get laptop stand", done: false },
-      { id: 8, text: "Get haircut after body starts improving", done: false },
+    decide:[
+      {id:5, text:"Build daily workout: 20min run + chest + forearms",done:false},
+      {id:6, text:"Plan protein-rich meal every day (eggs, dal, paneer)",done:false},
+      {id:7, text:"Fix posture while coding — get laptop stand",done:false},
+      {id:8, text:"Get haircut after body starts improving",done:false},
     ],
-    delegate: [{ id: 9, text: "Order Ketoconazole + supplements online (ask family)", done: false }],
-    delete: [
-      { id: 10, text: "Overthinking body issues without taking action first", done: false },
-      { id: 11, text: "Skipping sleep to scroll Instagram at midnight", done: false },
-    ],
-  },
-  mental: {
-    do: [
-      { id: 12, text: "Write M2 Unit Test 1 short notes (remad) — before test", done: false },
-      { id: 13, text: "Complete PHY + BXE + Math + PPS + EM assignments", done: false },
-      { id: 14, text: "Solve 1 LeetCode problem daily (C++ priority)", done: false },
-      { id: 15, text: "Printouts: Math QB, PPS unit 3/4/5, BXE all, PHY all", done: false },
-    ],
-    decide: [
-      { id: 16, text: "Create 2 desktop folders: 1_ACADEMICS + 2_AI_TOOLS", done: false },
-      { id: 17, text: "IITM BS DS — PYQ short notes (1 subject/week)", done: false },
-      { id: 18, text: "Life mind map: ideal day at 27, work backwards", done: false },
-      { id: 19, text: "English — read 1 article/day (BBC, The Hindu)", done: false },
-    ],
-    delegate: [{ id: 20, text: "Send printout list to campus print shop", done: false }],
-    delete: [
-      { id: 21, text: "YouTube 'study with me' videos = procrastination", done: false },
-      { id: 22, text: "Multitasking while studying — kills retention", done: false },
-      { id: 23, text: "Calling yourself dumb — you are overwhelmed, not dumb", done: false },
+    delegate:[{id:9,text:"Order Ketoconazole + supplements online (ask family)",done:false}],
+    delete:[
+      {id:10,text:"Overthinking body issues without taking action first",done:false},
+      {id:11,text:"Skipping sleep to scroll Instagram at midnight",done:false},
     ],
   },
-  relational: {
-    do: [
-      { id: 24, text: "Update LinkedIn: photo, headline, DYPIT + IITM, skills", done: false },
-      { id: 25, text: "Stop isolating — share ONE win today with a friend", done: false },
+  mental:{
+    do:[
+      {id:12,text:"Write M2 Unit Test 1 short notes (remad) — before test",done:false},
+      {id:13,text:"Complete PHY + BXE + Math + PPS + EM assignments",done:false},
+      {id:14,text:"Solve 1 LeetCode problem daily (C++ priority)",done:false},
+      {id:15,text:"Printouts: Math QB, PPS unit 3/4/5, BXE all, PHY all",done:false},
     ],
-    decide: [
-      { id: 26, text: "Build HFT/quant community on LinkedIn (connect weekly)", done: false },
-      { id: 27, text: "Practice remembering names — repeat name 3x when you meet", done: false },
-      { id: 28, text: "Join hackathon team or coding club for brotherhood", done: false },
-      { id: 29, text: "Attend at least 1 tech event/meetup per semester", done: false },
+    decide:[
+      {id:16,text:"Create 2 desktop folders: 1_ACADEMICS + 2_AI_TOOLS",done:false},
+      {id:17,text:"IITM BS DS — PYQ short notes (1 subject/week)",done:false},
+      {id:18,text:"Life mind map: ideal day at 27, work backwards",done:false},
+      {id:19,text:"English — read 1 article/day (BBC, The Hindu)",done:false},
     ],
-    delegate: [],
-    delete: [
-      { id: 30, text: "Mindless Instagram scrolling — zero ROI, pure dopamine drain", done: false },
-      { id: 31, text: "Comparing yourself to others without action — pointless spiral", done: false },
-    ],
-  },
-  spiritual: {
-    do: [
-      { id: 32, text: "Start 10-min morning meditation — breath counting, no apps", done: false },
-      { id: 33, text: "Write your WHY: why HFT? What does ideal life look like?", done: false },
-    ],
-    decide: [
-      { id: 34, text: "Read Atomic Habits (1st mental toughness book)", done: false },
-      { id: 35, text: "Study consciousness + philosophy of mind (intro level)", done: false },
-      { id: 36, text: "2-hour life planning: direction, goals, 5-year vision", done: false },
-      { id: 37, text: "Study Stoicism — Marcus Aurelius (free on Project Gutenberg)", done: false },
-    ],
-    delegate: [],
-    delete: [
-      { id: 38, text: "Overthinking without execution — action kills anxiety", done: false },
-      { id: 39, text: "Waiting to feel 'motivated' — discipline > motivation always", done: false },
-      { id: 40, text: "Planning 100 things, executing 0 — pick 3 tasks max/day", done: false },
+    delegate:[{id:20,text:"Send printout list to campus print shop",done:false}],
+    delete:[
+      {id:21,text:"YouTube 'study with me' videos = procrastination",done:false},
+      {id:22,text:"Multitasking while studying — kills retention",done:false},
+      {id:23,text:"Calling yourself dumb — you are overwhelmed, not dumb",done:false},
     ],
   },
-  financial: {
-    do: [
-      { id: 41, text: "LeetCode daily: arrays, hashmaps, heaps, binary search (C++)", done: false },
-      { id: 42, text: "Study HFT firms: Graviton, iRage, Quadeye, Tower India", done: false },
-      { id: 43, text: "Push ALL code to GitHub — this IS your HFT resume", done: false },
+  relational:{
+    do:[
+      {id:24,text:"Update LinkedIn: photo, headline, DYPIT + IITM, skills",done:false},
+      {id:25,text:"Stop isolating — share ONE win today with a friend",done:false},
     ],
-    decide: [
-      { id: 44, text: "Learn algo trading Python: backtrader / zipline (1hr/week)", done: false },
-      { id: 45, text: "Build 1 original TradingView Pine Script indicator", done: false },
-      { id: 46, text: "IITM priority: Statistics → Python → ML (in order)", done: false },
-      { id: 47, text: "Pick 1 research paper topic (chess+quant signal idea 🔥)", done: false },
-      { id: 48, text: "Plan GSoC application for Year 3 (start repo now)", done: false },
-      { id: 49, text: "GRE backup: CMU MSCF / Columbia MFE / NYU Tandon", done: false },
+    decide:[
+      {id:26,text:"Build HFT/quant community on LinkedIn (connect weekly)",done:false},
+      {id:27,text:"Practice remembering names — repeat name 3x when you meet",done:false},
+      {id:28,text:"Join hackathon team or coding club for brotherhood",done:false},
+      {id:29,text:"Attend at least 1 tech event/meetup per semester",done:false},
     ],
-    delegate: [{ id: 50, text: "Father's wine shop operations — delegate, not your job", done: false }],
-    delete: [
-      { id: 51, text: "Buying 10 courses and finishing 0 — one course, finish it", done: false },
-      { id: 52, text: "Politics / petrol pump as serious career plan right now", done: false },
+    delegate:[],
+    delete:[
+      {id:30,text:"Mindless Instagram scrolling — zero ROI, pure dopamine drain",done:false},
+      {id:31,text:"Comparing yourself to others without action — pointless spiral",done:false},
+    ],
+  },
+  spiritual:{
+    do:[
+      {id:32,text:"Start 10-min morning meditation — breath counting, no apps",done:false},
+      {id:33,text:"Write your WHY: why HFT? What does ideal life look like?",done:false},
+    ],
+    decide:[
+      {id:34,text:"Read Atomic Habits (1st mental toughness book)",done:false},
+      {id:35,text:"Study consciousness + philosophy of mind (intro level)",done:false},
+      {id:36,text:"2-hour life planning: direction, goals, 5-year vision",done:false},
+      {id:37,text:"Study Stoicism — Marcus Aurelius (free on Project Gutenberg)",done:false},
+    ],
+    delegate:[],
+    delete:[
+      {id:38,text:"Overthinking without execution — action kills anxiety",done:false},
+      {id:39,text:"Waiting to feel 'motivated' — discipline > motivation always",done:false},
+      {id:40,text:"Planning 100 things, executing 0 — pick 3 tasks max/day",done:false},
+    ],
+  },
+  financial:{
+    do:[
+      {id:41,text:"LeetCode daily: arrays, hashmaps, heaps, binary search (C++)",done:false},
+      {id:42,text:"Study HFT firms: Graviton, iRage, Quadeye, Tower India",done:false},
+      {id:43,text:"Push ALL code to GitHub — this IS your HFT resume",done:false},
+    ],
+    decide:[
+      {id:44,text:"Learn algo trading Python: backtrader / zipline (1hr/week)",done:false},
+      {id:45,text:"Build 1 original TradingView Pine Script indicator",done:false},
+      {id:46,text:"IITM priority: Statistics → Python → ML (in order)",done:false},
+      {id:47,text:"Pick 1 research paper topic (chess+quant signal idea 🔥)",done:false},
+      {id:48,text:"Plan GSoC application for Year 3 (start repo now)",done:false},
+      {id:49,text:"GRE backup: CMU MSCF / Columbia MFE / NYU Tandon",done:false},
+    ],
+    delegate:[{id:50,text:"Father's wine shop operations — delegate, not your job",done:false}],
+    delete:[
+      {id:51,text:"Buying 10 courses and finishing 0 — one course, finish it",done:false},
+      {id:52,text:"Politics / petrol pump as serious career plan right now",done:false},
     ],
   },
 };
 
 const DEFAULT_MINDMAP = {
-  id: "root", text: "My Life OS", expanded: true,
-  children: [
-    {
-      id: "m1", text: "🎯 Career", expanded: true,
-      children: [
-        { id: "m1a", text: "HFT / Quant Finance", expanded: false, children: [
-          { id: "m1a1", text: "Graviton, iRage, Quadeye", expanded: false, children: [] },
-          { id: "m1a2", text: "LeetCode C++ daily", expanded: false, children: [] },
-        ]},
-        { id: "m1b", text: "DYPIT BE AI & DS", expanded: false, children: [] },
-        { id: "m1c", text: "IITM BS Data Science", expanded: false, children: [] },
-        { id: "m1d", text: "MS Abroad (GRE backup)", expanded: false, children: [] },
-      ],
-    },
-    {
-      id: "m2", text: "💪 Physical", expanded: true,
-      children: [
-        { id: "m2a", text: "Gym + Run daily", expanded: false, children: [] },
-        { id: "m2b", text: "Fix varicocele (urologist)", expanded: false, children: [] },
-        { id: "m2c", text: "Dandruff → Ketoconazole", expanded: false, children: [] },
-        { id: "m2d", text: "Sleep 7+ hrs", expanded: false, children: [] },
-      ],
-    },
-    {
-      id: "m3", text: "🧠 Skills", expanded: true,
-      children: [
-        { id: "m3a", text: "DSA (C++ + Python)", expanded: false, children: [] },
-        { id: "m3b", text: "ML / AI / DL", expanded: false, children: [] },
-        { id: "m3c", text: "Algo Trading", expanded: false, children: [] },
-        { id: "m3d", text: "TradingView Pine Script", expanded: false, children: [] },
-      ],
-    },
-    {
-      id: "m4", text: "📚 Study", expanded: false,
-      children: [
-        { id: "m4a", text: "Assignments pending", expanded: false, children: [] },
-        { id: "m4b", text: "IITM PYQs", expanded: false, children: [] },
-        { id: "m4c", text: "Research paper", expanded: false, children: [] },
-      ],
-    },
-    {
-      id: "m5", text: "💰 Finance & Business", expanded: false,
-      children: [
-        { id: "m5a", text: "Trading income", expanded: false, children: [] },
-        { id: "m5b", text: "Invest in self first", expanded: false, children: [] },
-        { id: "m5c", text: "Content creation (later)", expanded: false, children: [] },
-      ],
-    },
-    {
-      id: "m6", text: "🌐 Social", expanded: false,
-      children: [
-        { id: "m6a", text: "LinkedIn growth", expanded: false, children: [] },
-        { id: "m6b", text: "GitHub portfolio", expanded: false, children: [] },
-        { id: "m6c", text: "Tech network", expanded: false, children: [] },
-      ],
-    },
+  id:"root",text:"My Life OS",expanded:true,
+  children:[
+    {id:"m1",text:"🎯 Career",expanded:true,children:[
+      {id:"m1a",text:"HFT / Quant Finance",expanded:false,children:[
+        {id:"m1a1",text:"Graviton, iRage, Quadeye",expanded:false,children:[]},
+        {id:"m1a2",text:"LeetCode C++ daily",expanded:false,children:[]},
+      ]},
+      {id:"m1b",text:"DYPIT BE AI & DS",expanded:false,children:[]},
+      {id:"m1c",text:"IITM BS Data Science",expanded:false,children:[]},
+      {id:"m1d",text:"MS Abroad (GRE backup)",expanded:false,children:[]},
+    ]},
+    {id:"m2",text:"💪 Physical",expanded:true,children:[
+      {id:"m2a",text:"Gym + Run daily",expanded:false,children:[]},
+      {id:"m2b",text:"Fix varicocele (urologist)",expanded:false,children:[]},
+      {id:"m2c",text:"Dandruff → Ketoconazole",expanded:false,children:[]},
+      {id:"m2d",text:"Sleep 7+ hrs",expanded:false,children:[]},
+    ]},
+    {id:"m3",text:"🧠 Skills",expanded:true,children:[
+      {id:"m3a",text:"DSA (C++ + Python)",expanded:false,children:[]},
+      {id:"m3b",text:"ML / AI / DL",expanded:false,children:[]},
+      {id:"m3c",text:"Algo Trading",expanded:false,children:[]},
+      {id:"m3d",text:"TradingView Pine Script",expanded:false,children:[]},
+    ]},
+    {id:"m4",text:"📚 Study",expanded:false,children:[
+      {id:"m4a",text:"Assignments pending",expanded:false,children:[]},
+      {id:"m4b",text:"IITM PYQs",expanded:false,children:[]},
+      {id:"m4c",text:"Research paper",expanded:false,children:[]},
+    ]},
+    {id:"m5",text:"💰 Finance & Business",expanded:false,children:[
+      {id:"m5a",text:"Trading income goal",expanded:false,children:[]},
+      {id:"m5b",text:"Invest in self first",expanded:false,children:[]},
+      {id:"m5c",text:"Content creation (later)",expanded:false,children:[]},
+    ]},
+    {id:"m6",text:"🌐 Social",expanded:false,children:[
+      {id:"m6a",text:"LinkedIn growth",expanded:false,children:[]},
+      {id:"m6b",text:"GitHub portfolio",expanded:false,children:[]},
+      {id:"m6c",text:"Tech network",expanded:false,children:[]},
+    ]},
   ],
 };
 
 const DEFAULT_NOTES = [
-  {
-    id: 1, title: "Instagram Album — 7 Pillars", pinned: true, color: "purple",
-    category: "Personal",
-    content: "Organise Instagram saved posts into these 7 collections:\n\n💛 BODY\n🧠 MIND\n💰 MONEY\n🌍 WORLD\n🎯 SKILLS\n👥 SOCIAL\n✨ LIFESTYLE\n\nHow to: Open Instagram → Saved → Create a collection for each Pillar. Save posts accordingly. Review weekly.",
-    createdAt: Date.now() - 86400000 * 5,
-  },
-  {
-    id: 2, title: "Career Paths After Engineering", pinned: true, color: "blue",
-    category: "Career",
-    content: "PRIMARY: HFT Job (Graviton, iRage, Quadeye, Tower)\nBACKUP: MS Abroad → GRE + TOEFL\n\nWhat to build NOW:\n- DSA on LeetCode + HackerRank\n- GitHub projects (Python ML, C++ DSA)\n- IITM stats + ML courses\n- Research paper (chess+quant signal)\n- GSoC Year 3\n\nDo NOT pursue: GATE, CAT, UPSC right now.",
-    createdAt: Date.now() - 86400000 * 3,
-  },
-  {
-    id: 3, title: "Books Roadmap", pinned: false, color: "yellow",
-    category: "Study",
-    content: "1. Atomic Habits — James Clear (mindset foundation)\n2. The Intelligent Investor — Benjamin Graham\n3. Algorithmic Trading — Ernest Chan\n4. Python for Finance — Yves Hilpisch\n5. Thinking in Bets — Annie Duke\n6. Marcus Aurelius — Meditations (free)\n\nRule: finish ONE before starting the next.",
-    createdAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: 4, title: "Shopping List (Priority Order)", pinned: false, color: "green",
-    category: "Personal",
-    content: "🔴 URGENT:\n- Ketoconazole 2% shampoo\n- Red pens (×2)\n- Toothbrush\n\n🟡 MEDIUM:\n- Phone cover\n- Laptop stand (OMOTON LA10)\n- Power bank\n- Facemask\n\n🟢 LATER:\n- White sneakers\n- New pants\n- Perfume\n- New phone",
-    createdAt: Date.now() - 86400000,
-  },
+  {id:1,title:"Instagram Album — 7 Pillars",pinned:true,color:"purple",category:"Personal",
+   content:"Organise Instagram saved posts into these 7 collections:\n\n💛 BODY\n🧠 MIND\n💰 MONEY\n🌍 WORLD\n🎯 SKILLS\n👥 SOCIAL\n✨ LIFESTYLE\n\nHow to: Instagram → Saved → Create collection for each Pillar. Review weekly.",
+   createdAt:Date.now()-86400000*5},
+  {id:2,title:"Career Paths After Engineering",pinned:true,color:"blue",category:"Career",
+   content:"PRIMARY: HFT Job (Graviton, iRage, Quadeye, Tower)\nBACKUP: MS Abroad → GRE + TOEFL\n\nWhat to build NOW:\n- DSA on LeetCode + HackerRank\n- GitHub projects (Python ML, C++ DSA)\n- IITM stats + ML courses\n- Research paper (chess+quant signal)\n- GSoC Year 3",
+   createdAt:Date.now()-86400000*3},
+  {id:3,title:"Books Roadmap",pinned:false,color:"yellow",category:"Study",
+   content:"1. Atomic Habits — James Clear\n2. The Intelligent Investor — Graham\n3. Algorithmic Trading — Ernest Chan\n4. Python for Finance — Yves Hilpisch\n5. Thinking in Bets — Annie Duke\n6. Meditations — Marcus Aurelius (free)\n\nRule: finish ONE before starting next.",
+   createdAt:Date.now()-86400000*2},
+  {id:4,title:"Shopping List (Priority Order)",pinned:false,color:"green",category:"Personal",
+   content:"🔴 URGENT:\n- Ketoconazole 2% shampoo\n- Red pens (×2)\n- Toothbrush\n\n🟡 MEDIUM:\n- Phone cover\n- Laptop stand (OMOTON LA10)\n- Power bank\n\n🟢 LATER:\n- White sneakers\n- New pants\n- Perfume\n- New phone",
+   createdAt:Date.now()-86400000},
 ];
 
-// ─── STORAGE HELPERS ──────────────────────────────────────────
-const STORAGE_KEY = "prasad-lifeOS-v7";
-const loadStorage = async () => {
-  try {
-    const r = await window.storage.get(STORAGE_KEY);
-    return r && r.value ? JSON.parse(r.value) : null;
-  } catch { return null; }
-};
-const saveStorage = async (data) => {
-  try { await window.storage.set(STORAGE_KEY, JSON.stringify(data)); } catch {}
-};
+/* ── STORAGE (localStorage) ── */
+const KEY = "prasad-lifeOS-v7";
+const load = () => { try { const d=localStorage.getItem(KEY); return d?JSON.parse(d):null; } catch{return null;} };
+const save = (data) => { try { localStorage.setItem(KEY,JSON.stringify(data)); } catch{} };
 
-// ─── MINDMAP NODE ─────────────────────────────────────────────
-function MindNode({ node, depth, onUpdate, onDelete, onAdd, isRoot }) {
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(node.text);
-  const [addingChild, setAddingChild] = useState(false);
-  const [newChildText, setNewChildText] = useState("");
-  const inputRef = useRef(null);
-  const hasChildren = node.children && node.children.length > 0;
-  const indent = depth * (depth > 2 ? 14 : 18);
-  const nodeColor = depth === 0 ? "#fbbf24" : depth === 1 ? "#4d9eff" : depth === 2 ? "#00d97e" : "#b57bff";
+/* ── MINDMAP NODE ── */
+function MindNode({node,depth,onUpdate,onDelete,onAdd,isRoot}) {
+  const [editing,setEditing]         = useState(false);
+  const [editText,setEditText]       = useState(node.text);
+  const [addingChild,setAddingChild] = useState(false);
+  const [newChild,setNewChild]       = useState("");
+  const has = node.children && node.children.length > 0;
+  const nc  = depth===0?"#fbbf24":depth===1?"#4d9eff":depth===2?"#00d97e":"#b57bff";
+  const fs  = depth===0?15:depth===1?13:12;
+  const fw  = depth<=1?600:400;
 
-  const saveEdit = () => {
-    if (editText.trim()) onUpdate(node.id, editText.trim());
-    setEditing(false);
-  };
-  const addChild = () => {
-    if (newChildText.trim()) { onAdd(node.id, newChildText.trim()); setNewChildText(""); setAddingChild(false); }
-  };
+  const saveEdit=()=>{ if(editText.trim()) onUpdate(node.id,editText.trim()); setEditing(false); };
+  const doAdd=()=>{ if(newChild.trim()){onAdd(node.id,newChild.trim());setNewChild("");setAddingChild(false);} };
 
   return (
-    <div style={{ marginLeft: isRoot ? 0 : indent }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 0", group: true }}>
-        {/* Expand toggle */}
-        <button onClick={() => onUpdate(node.id, node.text, !node.expanded)}
-          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0, width: 16 }}>
-          {hasChildren
-            ? (node.expanded ? <ChevronDown size={12} color={nodeColor} /> : <CR size={12} color={nodeColor} />)
-            : <div style={{ width: 8, height: 8, borderRadius: "50%", background: nodeColor, opacity: 0.4, marginLeft: 4 }} />
-          }
+    <div style={{marginLeft:isRoot?0:depth>2?14:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0"}}>
+        <button onClick={()=>onUpdate(node.id,node.text,!node.expanded)} style={{background:"transparent",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",flexShrink:0,width:16}}>
+          {has?(node.expanded?<ChevronDown size={12} color={nc}/>:<CR size={12} color={nc}/>):<div style={{width:8,height:8,borderRadius:"50%",background:nc,opacity:0.4,marginLeft:4}}/>}
         </button>
-
-        {/* Node text / edit */}
-        {editing ? (
-          <input ref={inputRef} value={editText} onChange={e => setEditText(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditing(false); }}
+        {editing?(
+          <input value={editText} onChange={e=>setEditText(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
             onBlur={saveEdit} autoFocus
-            style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: `1px solid ${nodeColor}50`, borderRadius: 6, padding: "3px 8px", color: "#e0e0f0", fontSize: depth === 0 ? 15 : depth === 1 ? 13 : 12, fontFamily: "'Outfit', sans-serif", outline: "none" }}
-          />
-        ) : (
-          <span onDoubleClick={() => setEditing(true)} style={{ flex: 1, fontSize: depth === 0 ? 15 : depth === 1 ? 13 : 12, fontWeight: depth <= 1 ? 600 : 400, color: depth === 0 ? nodeColor : depth === 1 ? "#e0e0f0" : "#a0a0c0", cursor: "default", lineHeight: 1.4, userSelect: "none" }}>
-            {node.text}
-          </span>
+            style={{flex:1,background:"rgba(255,255,255,0.06)",border:`1px solid ${nc}50`,borderRadius:6,padding:"3px 8px",color:"#e0e0f0",fontSize:fs,outline:"none"}}/>
+        ):(
+          <span onDoubleClick={()=>setEditing(true)} style={{flex:1,fontSize:fs,fontWeight:fw,color:depth===0?nc:depth===1?"#e0e0f0":"#a0a0c0",cursor:"default",lineHeight:1.4,userSelect:"none"}}>{node.text}</span>
         )}
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-          <button onClick={() => setAddingChild(true)} title="Add child"
-            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: "#303055", transition: "color 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.color = nodeColor}
-            onMouseLeave={e => e.currentTarget.style.color = "#303055"}>
-            <Plus size={11} />
-          </button>
-          {!isRoot && (
-            <button onClick={() => onDelete(node.id)} title="Delete"
-              style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: "#303055", transition: "color 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#ff4d7e"}
-              onMouseLeave={e => e.currentTarget.style.color = "#303055"}>
-              <Minus size={11} />
-            </button>
-          )}
+        <div style={{display:"flex",gap:3,flexShrink:0}}>
+          <button onClick={()=>setAddingChild(true)} style={{background:"transparent",border:"none",cursor:"pointer",padding:2,color:"#303055",transition:"color 0.15s"}}
+            onMouseEnter={e=>e.currentTarget.style.color=nc} onMouseLeave={e=>e.currentTarget.style.color="#303055"}><Plus size={11}/></button>
+          {!isRoot&&<button onClick={()=>onDelete(node.id)} style={{background:"transparent",border:"none",cursor:"pointer",padding:2,color:"#303055",transition:"color 0.15s"}}
+            onMouseEnter={e=>e.currentTarget.style.color="#ff4d7e"} onMouseLeave={e=>e.currentTarget.style.color="#303055"}><Minus size={11}/></button>}
         </div>
       </div>
-
-      {/* Add child input */}
-      {addingChild && (
-        <div style={{ marginLeft: indent + 22, display: "flex", gap: 6, padding: "4px 0" }}>
-          <input value={newChildText} onChange={e => setNewChildText(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") addChild(); if (e.key === "Escape") setAddingChild(false); }}
+      {addingChild&&(
+        <div style={{marginLeft:22,display:"flex",gap:6,padding:"4px 0"}}>
+          <input value={newChild} onChange={e=>setNewChild(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter")doAdd();if(e.key==="Escape")setAddingChild(false);}}
             placeholder="New node..." autoFocus
-            style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: `1px solid ${nodeColor}40`, borderRadius: 6, padding: "4px 9px", color: "#e0e0f0", fontSize: 12, fontFamily: "'Outfit', sans-serif", outline: "none" }}
-          />
-          <button onClick={addChild} style={{ background: nodeColor, border: "none", borderRadius: 6, padding: "4px 10px", color: "#000", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Add</button>
-          <button onClick={() => setAddingChild(false)} style={{ background: "transparent", border: "none", color: "#505070", cursor: "pointer", fontSize: 11 }}>✕</button>
+            style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${nc}40`,borderRadius:6,padding:"4px 9px",color:"#e0e0f0",fontSize:12,outline:"none"}}/>
+          <button onClick={doAdd} style={{background:nc,border:"none",borderRadius:6,padding:"4px 10px",color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>Add</button>
+          <button onClick={()=>setAddingChild(false)} style={{background:"transparent",border:"none",color:"#505070",cursor:"pointer",fontSize:11}}>✕</button>
         </div>
       )}
-
-      {/* Children */}
-      {node.expanded && hasChildren && (
-        <div style={{ borderLeft: `1px solid ${nodeColor}20`, marginLeft: 7 }}>
-          {node.children.map(child => (
-            <MindNode key={child.id} node={child} depth={depth + 1} onUpdate={onUpdate} onDelete={onDelete} onAdd={onAdd} isRoot={false} />
-          ))}
+      {node.expanded&&has&&(
+        <div style={{borderLeft:`1px solid ${nc}20`,marginLeft:7}}>
+          {node.children.map(c=><MindNode key={c.id} node={c} depth={depth+1} onUpdate={onUpdate} onDelete={onDelete} onAdd={onAdd} isRoot={false}/>)}
         </div>
       )}
     </div>
   );
 }
 
-// ─── NOTE CARD ────────────────────────────────────────────────
-function NoteCard({ note, onEdit, onDelete, onTogglePin, isMobile }) {
-  const colorObj = NOTE_COLORS.find(c => c.id === note.color) || NOTE_COLORS[0];
-  const preview = note.content.length > 160 ? note.content.slice(0, 160) + "…" : note.content;
-  const dateStr = new Date(note.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-
+/* ── NOTE CARD ── */
+function NoteCard({note,onEdit,onDelete,onTogglePin}) {
+  const c = NOTE_COLORS.find(x=>x.id===note.color)||NOTE_COLORS[0];
+  const preview = note.content.length>150?note.content.slice(0,150)+"…":note.content;
+  const ds = new Date(note.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short"});
   return (
-    <div style={{ background: colorObj.bg, border: `1px solid ${colorObj.border}`, borderRadius: 12, padding: "13px 14px", display: "flex", flexDirection: "column", gap: 8, position: "relative", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-      onClick={() => onEdit(note)}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.3)`; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-
-      {/* Pin icon */}
-      <button onClick={e => { e.stopPropagation(); onTogglePin(note.id); }}
-        style={{ position: "absolute", top: 10, right: 10, background: "transparent", border: "none", cursor: "pointer", color: note.pinned ? "#fbbf24" : "#303055", padding: 2, transition: "color 0.15s" }}>
-        <Pin size={13} />
+    <div onClick={()=>onEdit(note)} style={{background:c.bg,border:`1px solid ${c.border}`,borderRadius:12,padding:"13px 14px",display:"flex",flexDirection:"column",gap:8,position:"relative",cursor:"pointer",transition:"transform 0.15s"}}
+      onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+      <button onClick={e=>{e.stopPropagation();onTogglePin(note.id);}} style={{position:"absolute",top:10,right:10,background:"transparent",border:"none",cursor:"pointer",color:note.pinned?"#fbbf24":"#303055",padding:2}}>
+        <Pin size={13}/>
       </button>
-
-      {/* Title */}
-      {note.title && <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, color: "#e0e0f0", paddingRight: 20, lineHeight: 1.3 }}>{note.title}</div>}
-
-      {/* Content preview */}
-      <div style={{ fontSize: 11.5, color: "#8080a0", lineHeight: 1.6, whiteSpace: "pre-line", fontFamily: "'Outfit', sans-serif" }}>{preview}</div>
-
-      {/* Footer */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#303055" }}>{dateStr} · {note.category}</span>
-        <button onClick={e => { e.stopPropagation(); onDelete(note.id); }}
-          style={{ background: "transparent", border: "none", cursor: "pointer", color: "#303055", padding: 2, transition: "color 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.color = "#ff4d7e"}
-          onMouseLeave={e => e.currentTarget.style.color = "#303055"}>
-          <Trash2 size={11} />
-        </button>
+      {note.title&&<div style={{fontFamily:"'DM Serif Display',serif",fontSize:14,color:"#e0e0f0",paddingRight:20,lineHeight:1.3}}>{note.title}</div>}
+      <div style={{fontSize:11.5,color:"#8080a0",lineHeight:1.6,whiteSpace:"pre-line"}}>{preview}</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:2}}>
+        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#303055"}}>{ds} · {note.category}</span>
+        <button onClick={e=>{e.stopPropagation();onDelete(note.id);}} style={{background:"transparent",border:"none",cursor:"pointer",color:"#303055",padding:2,transition:"color 0.15s"}}
+          onMouseEnter={e=>e.currentTarget.style.color="#ff4d7e"} onMouseLeave={e=>e.currentTarget.style.color="#303055"}><Trash2 size={11}/></button>
       </div>
     </div>
   );
 }
 
-// ─── NOTE EDITOR MODAL ───────────────────────────────────────
-function NoteEditor({ note, onSave, onClose, isMobile }) {
-  const [title, setTitle] = useState(note ? note.title : "");
-  const [content, setContent] = useState(note ? note.content : "");
-  const [color, setColor] = useState(note ? note.color : "default");
-  const [category, setCategory] = useState(note ? note.category : "Other");
-  const colorObj = NOTE_COLORS.find(c => c.id === color) || NOTE_COLORS[0];
-
-  const handleSave = () => {
-    if (!content.trim() && !title.trim()) return;
-    onSave({ title, content, color, category });
-  };
-
+/* ── NOTE EDITOR ── */
+function NoteEditor({note,onSave,onClose,isMobile}) {
+  const [title,setTitle]     = useState(note?note.title:"");
+  const [content,setContent] = useState(note?note.content:"");
+  const [color,setColor]     = useState(note?note.color:"default");
+  const [cat,setCat]         = useState(note?note.category:"Other");
+  const c = NOTE_COLORS.find(x=>x.id===color)||NOTE_COLORS[0];
+  const doSave=()=>{ if(!content.trim()&&!title.trim())return; onSave({title,content,color,category:cat}); };
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 3000, padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0d1e", border: `1px solid ${colorObj.border}`, borderRadius: isMobile ? "18px 18px 0 0" : 16, width: "100%", maxWidth: isMobile ? "100%" : 560, maxHeight: isMobile ? "90vh" : "80vh", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.7)", paddingBottom: isMobile ? 16 : 0 }}>
-
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#e0e0f0" }}>{note ? "Edit Note" : "New Note"}</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button onClick={handleSave} style={{ background: "#4d9eff", border: "none", borderRadius: 8, padding: "6px 14px", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-              <Save size={12} /> Save
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",zIndex:3000,padding:isMobile?0:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#0d0d1e",border:`1px solid ${c.border}`,borderRadius:isMobile?"18px 18px 0 0":16,width:"100%",maxWidth:isMobile?"100%":560,maxHeight:isMobile?"90vh":"80vh",display:"flex",flexDirection:"column",paddingBottom:isMobile?16:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:"#e0e0f0"}}>{note?"Edit Note":"New Note"}</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button onClick={doSave} style={{background:"#4d9eff",border:"none",borderRadius:8,padding:"6px 14px",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+              <Save size={12}/> Save
             </button>
-            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "none", color: "#505070", cursor: "pointer", width: 28, height: 28, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <X size={14} />
-            </button>
+            <button onClick={onClose} style={{background:"rgba(255,255,255,0.05)",border:"none",color:"#505070",cursor:"pointer",width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center"}}><X size={14}/></button>
           </div>
         </div>
-
-        {/* Toolbar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", flexWrap: "wrap" }}>
-          {/* Color picker */}
-          <div style={{ display: "flex", gap: 5 }}>
-            {NOTE_COLORS.map(c => (
-              <button key={c.id} onClick={() => setColor(c.id)} title={c.label}
-                style={{ width: 18, height: 18, borderRadius: "50%", background: c.border, border: color === c.id ? "2px solid #fff" : "2px solid transparent", cursor: "pointer", transition: "border 0.15s" }} />
-            ))}
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 16px",borderBottom:"1px solid rgba(255,255,255,0.04)",flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:5}}>
+            {NOTE_COLORS.map(x=><button key={x.id} onClick={()=>setColor(x.id)} style={{width:18,height:18,borderRadius:"50%",background:x.border,border:color===x.id?"2px solid #fff":"2px solid transparent",cursor:"pointer"}}/>)}
           </div>
-          <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.08)" }} />
-          {/* Category */}
-          <select value={category} onChange={e => setCategory(e.target.value)}
-            style={{ background: "#111126", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, padding: "3px 8px", color: "#a0a0c0", fontSize: 11, fontFamily: "'Outfit', sans-serif", outline: "none", cursor: "pointer" }}>
-            {NOTE_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
+          <div style={{width:1,height:18,background:"rgba(255,255,255,0.08)"}}/>
+          <select value={cat} onChange={e=>setCat(e.target.value)} style={{background:"#111126",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,padding:"3px 8px",color:"#a0a0c0",fontSize:11,outline:"none",cursor:"pointer"}}>
+            {NOTE_CATS.filter(x=>x!=="All").map(x=><option key={x} value={x}>{x}</option>)}
           </select>
         </div>
-
-        {/* Content */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "12px 16px", gap: 10, overflowY: "auto", minHeight: 0 }}>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title (optional)"
-            style={{ background: "transparent", border: "none", outline: "none", fontFamily: "'DM Serif Display', serif", fontSize: 20, color: "#e0e0f0", width: "100%", padding: 0 }} />
-          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your note... (supports multi-line)"
-            style={{ flex: 1, background: "transparent", border: "none", outline: "none", resize: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#b0b0cc", lineHeight: 1.7, width: "100%", minHeight: 200, padding: 0 }} />
+        <div style={{flex:1,display:"flex",flexDirection:"column",padding:"12px 16px",gap:10,overflowY:"auto",minHeight:0}}>
+          <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title (optional)"
+            style={{background:"transparent",border:"none",outline:"none",fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#e0e0f0",width:"100%",padding:0}}/>
+          <textarea value={content} onChange={e=>setContent(e.target.value)} placeholder="Write your note..."
+            style={{flex:1,background:"transparent",border:"none",outline:"none",resize:"none",fontSize:13,color:"#b0b0cc",lineHeight:1.7,width:"100%",minHeight:200,padding:0}}/>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── LOGIN SCREEN ─────────────────────────────────────────────
-function LoginScreen({ onLogin, isMobile }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [step, setStep] = useState(1);
-  const [err, setErr] = useState("");
-
-  const handleNext = () => {
-    if (step === 1) {
-      if (!name.trim()) { setErr("Enter your name"); return; }
-      setErr(""); setStep(2);
-    } else {
-      if (!email.includes("@")) { setErr("Enter a valid email"); return; }
-      setErr(""); onLogin({ name: name.trim(), email: email.trim().toLowerCase() });
-    }
+/* ── LOGIN ── */
+function LoginScreen({onLogin,isMobile}) {
+  const [name,setName]   = useState("");
+  const [email,setEmail] = useState("");
+  const [step,setStep]   = useState(1);
+  const [err,setErr]     = useState("");
+  const next=()=>{
+    if(step===1){if(!name.trim()){setErr("Enter your name");return;} setErr("");setStep(2);}
+    else{if(!email.includes("@")){setErr("Enter a valid email");return;} setErr("");onLogin({name:name.trim(),email:email.trim().toLowerCase()});}
   };
-
   return (
-    <div style={{ minHeight: "100vh", background: "#07070f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden" }}>
-      {/* Glows */}
-      <div style={{ position: "absolute", top: "-20%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(77,158,255,0.15) 0%, transparent 65%)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", bottom: "-20%", right: "-10%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(181,123,255,0.12) 0%, transparent 65%)", pointerEvents: "none" }} />
-
-      <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
-        {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 38, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>PRASAD</div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: "#303055", letterSpacing: 5 }}>LIFE OPERATING SYSTEM</div>
-          <div style={{ width: 40, height: 2, background: "linear-gradient(90deg, #4d9eff, #b57bff)", borderRadius: 2, margin: "14px auto 0" }} />
+    <div style={{minHeight:"100vh",background:"#07070f",display:"flex",alignItems:"center",justifyContent:"center",padding:20,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:"-20%",left:"-10%",width:500,height:500,borderRadius:"50%",background:"radial-gradient(circle,rgba(77,158,255,0.15) 0%,transparent 65%)",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",bottom:"-20%",right:"-10%",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(181,123,255,0.12) 0%,transparent 65%)",pointerEvents:"none"}}/>
+      <div style={{width:"100%",maxWidth:400,position:"relative",zIndex:1}}>
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:38,color:"#fff",letterSpacing:6,marginBottom:4}}>PRASAD</div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"#303055",letterSpacing:5}}>LIFE OPERATING SYSTEM</div>
+          <div style={{width:40,height:2,background:"linear-gradient(90deg,#4d9eff,#b57bff)",borderRadius:2,margin:"14px auto 0"}}/>
         </div>
-
-        {/* Card */}
-        <div style={{ background: "rgba(12,12,28,0.95)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "28px 24px", backdropFilter: "blur(20px)", boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}>
-          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 22, color: "#e0e0f0", marginBottom: 4 }}>
-            {step === 1 ? "Welcome back" : "One more step"}
+        <div style={{background:"rgba(12,12,28,0.95)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:20,padding:"28px 24px"}}>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#e0e0f0",marginBottom:4}}>{step===1?"Welcome back":"One more step"}</div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"#383860",letterSpacing:1,marginBottom:22}}>{step===1?"WHAT'S YOUR NAME?":"YOUR EMAIL ADDRESS"}</div>
+          <div style={{display:"flex",gap:6,marginBottom:20}}>
+            {[1,2].map(s=><div key={s} style={{height:3,flex:1,borderRadius:3,background:s<=step?"#4d9eff":"rgba(255,255,255,0.08)",transition:"background 0.3s"}}/>)}
           </div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: "#383860", letterSpacing: 1, marginBottom: 22 }}>
-            {step === 1 ? "WHAT'S YOUR NAME?" : "YOUR EMAIL ADDRESS"}
-          </div>
-
-          {/* Step dots */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-            {[1, 2].map(s => (
-              <div key={s} style={{ height: 3, flex: 1, borderRadius: 3, background: s <= step ? "#4d9eff" : "rgba(255,255,255,0.08)", transition: "background 0.3s" }} />
-            ))}
-          </div>
-
-          {step === 1 ? (
-            <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleNext()} placeholder="e.g. Prasad" autoFocus
-              style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", color: "#e0e0f0", fontSize: 15, fontFamily: "'Outfit', sans-serif", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
-          ) : (
-            <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleNext()} placeholder="yourname@gmail.com" type="email" autoFocus
-              style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", color: "#e0e0f0", fontSize: 15, fontFamily: "'Outfit', sans-serif", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
+          {step===1?(
+            <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&next()} placeholder="e.g. Prasad" autoFocus
+              style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",color:"#e0e0f0",fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:8}}/>
+          ):(
+            <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&next()} placeholder="yourname@gmail.com" type="email" autoFocus
+              style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",color:"#e0e0f0",fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:8}}/>
           )}
-
-          {err && <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: "#ff4d7e", marginBottom: 8 }}>{err}</div>}
-
-          <button onClick={handleNext}
-            style={{ width: "100%", background: "linear-gradient(135deg, #4d9eff, #b57bff)", border: "none", borderRadius: 10, padding: "13px", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#fff", fontFamily: "'Outfit', sans-serif", marginTop: 4, transition: "opacity 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-            {step === 1 ? "Continue →" : "Enter Life OS →"}
+          {err&&<div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"#ff4d7e",marginBottom:8}}>{err}</div>}
+          <button onClick={next} style={{width:"100%",background:"linear-gradient(135deg,#4d9eff,#b57bff)",border:"none",borderRadius:10,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",color:"#fff",marginTop:4}}>
+            {step===1?"Continue →":"Enter Life OS →"}
           </button>
-
-          {step === 2 && (
-            <button onClick={() => setStep(1)} style={{ width: "100%", background: "transparent", border: "none", color: "#404060", cursor: "pointer", fontSize: 12, marginTop: 10, fontFamily: "'Outfit', sans-serif" }}>
-              ← Back
-            </button>
-          )}
-
-          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#1e1e35", textAlign: "center", marginTop: 16, marginBottom: 0, lineHeight: 1.6 }}>
-            Your data is stored locally on this device only.<br />No server. No tracking. Just you.
+          {step===2&&<button onClick={()=>setStep(1)} style={{width:"100%",background:"transparent",border:"none",color:"#404060",cursor:"pointer",fontSize:12,marginTop:10}}>← Back</button>}
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#1e1e35",textAlign:"center",marginTop:16,marginBottom:0,lineHeight:1.6}}>
+            Data stored locally on this device only.<br/>No server. No tracking. Just you.
           </p>
         </div>
       </div>
@@ -493,199 +404,124 @@ function LoginScreen({ onLogin, isMobile }) {
   );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────────
-export default function App() {
-  // Auth
-  const [user, setUser]               = useState(null);
-  const [authLoaded, setAuthLoaded]   = useState(false);
+/* ── MAIN APP ── */
+function App() {
+  const [user,setUser]               = useState(null);
+  const [authLoaded,setAuthLoaded]   = useState(false);
+  const [isMobile,setIsMobile]       = useState(false);
+  const [sidebarOpen,setSidebarOpen] = useState(true);
+  const [activeSection,setActiveSection] = useState("tasks");
+  const [tasks,setTasks]             = useState(DEFAULT_TASKS);
+  const [activePillar,setActivePillar]   = useState("physical");
+  const [showTaskModal,setShowTaskModal] = useState(false);
+  const [newTask,setNewTask]         = useState({text:"",pillar:"physical",quadrant:"do"});
+  const [notes,setNotes]             = useState(DEFAULT_NOTES);
+  const [noteFilter,setNoteFilter]   = useState("All");
+  const [noteSearch,setNoteSearch]   = useState("");
+  const [editingNote,setEditingNote] = useState(null);
+  const [showNoteEditor,setShowNoteEditor] = useState(false);
+  const [mindmap,setMindmap]         = useState(DEFAULT_MINDMAP);
+  const [today,setToday]             = useState("");
 
-  // Layout
-  const [isMobile, setIsMobile]       = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState("tasks"); // tasks | notes | mindmap
-
-  // Tasks
-  const [tasks, setTasks]             = useState(DEFAULT_TASKS);
-  const [activePillar, setActivePillar] = useState("physical");
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [newTask, setNewTask]         = useState({ text: "", pillar: "physical", quadrant: "do" });
-
-  // Notes
-  const [notes, setNotes]             = useState(DEFAULT_NOTES);
-  const [noteFilter, setNoteFilter]   = useState("All");
-  const [noteSearch, setNoteSearch]   = useState("");
-  const [editingNote, setEditingNote] = useState(null); // null | note | "new"
-  const [showNoteEditor, setShowNoteEditor] = useState(false);
-
-  // MindMap
-  const [mindmap, setMindmap]         = useState(DEFAULT_MINDMAP);
-
-  // UI
-  const [today, setToday]             = useState("");
-  const [loaded, setLoaded]           = useState(false);
-
-  // ── Init ──
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.href = FONT_URL; link.rel = "stylesheet";
-    document.head.appendChild(link);
-    const d = new Date();
-    setToday(d.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" }));
-    const check = () => {
-      const m = window.innerWidth < 700;
-      setIsMobile(m);
-      if (m) setSidebarOpen(false);
-    };
-    check();
-    window.addEventListener("resize", check);
-    return () => { try { document.head.removeChild(link); } catch {} window.removeEventListener("resize", check); };
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      const data = await loadStorage();
-      if (data) {
-        if (data.user)    setUser(data.user);
-        if (data.tasks)   setTasks(data.tasks);
-        if (data.notes)   setNotes(data.notes);
-        if (data.mindmap) setMindmap(data.mindmap);
-      }
-      setAuthLoaded(true);
-      setLoaded(true);
-    })();
-  }, []);
-
-  const persist = useCallback((patch) => {
-    const cur = { user, tasks, notes, mindmap };
-    const next = { ...cur, ...patch };
-    saveStorage(next);
-  }, [user, tasks, notes, mindmap]);
-
-  // ── Auth ──
-  const handleLogin = (u) => {
-    setUser(u);
-    persist({ user: u });
-  };
-  const handleLogout = async () => {
-    setUser(null);
-    await saveStorage({ user: null, tasks, notes, mindmap });
-  };
-
-  // ── Tasks ──
-  const addTask = () => {
-    if (!newTask.text.trim()) return;
-    const updated = { ...tasks, [newTask.pillar]: { ...tasks[newTask.pillar], [newTask.quadrant]: [...tasks[newTask.pillar][newTask.quadrant], { id: Date.now(), text: newTask.text.trim(), done: false }] } };
-    setTasks(updated); persist({ tasks: updated });
-    setNewTask({ text: "", pillar: activePillar, quadrant: "do" });
-    setShowTaskModal(false);
-  };
-  const toggleTask = (pillar, quad, id) => {
-    const u = { ...tasks, [pillar]: { ...tasks[pillar], [quad]: tasks[pillar][quad].map(t => t.id === id ? { ...t, done: !t.done } : t) } };
-    setTasks(u); persist({ tasks: u });
-  };
-  const removeTask = (pillar, quad, id) => {
-    const u = { ...tasks, [pillar]: { ...tasks[pillar], [quad]: tasks[pillar][quad].filter(t => t.id !== id) } };
-    setTasks(u); persist({ tasks: u });
-  };
-
-  // ── Notes ──
-  const saveNote = (data) => {
-    let updated;
-    if (editingNote && editingNote !== "new") {
-      updated = notes.map(n => n.id === editingNote.id ? { ...n, ...data } : n);
-    } else {
-      updated = [{ id: Date.now(), pinned: false, createdAt: Date.now(), ...data }, ...notes];
+  useEffect(()=>{
+    const d=new Date();
+    setToday(d.toLocaleDateString("en-IN",{weekday:"short",month:"short",day:"numeric"}));
+    const check=()=>{ const m=window.innerWidth<700; setIsMobile(m); if(m) setSidebarOpen(false); };
+    check(); window.addEventListener("resize",check);
+    const data=load();
+    if(data){
+      if(data.user)    setUser(data.user);
+      if(data.tasks)   setTasks(data.tasks);
+      if(data.notes)   setNotes(data.notes);
+      if(data.mindmap) setMindmap(data.mindmap);
     }
-    setNotes(updated); persist({ notes: updated });
-    setShowNoteEditor(false); setEditingNote(null);
-  };
-  const deleteNote = (id) => {
-    const u = notes.filter(n => n.id !== id);
-    setNotes(u); persist({ notes: u });
-  };
-  const togglePin = (id) => {
-    const u = notes.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n);
-    setNotes(u); persist({ notes: u });
-  };
-  const openNoteEdit = (note) => { setEditingNote(note); setShowNoteEditor(true); };
-  const openNewNote  = () => { setEditingNote("new"); setShowNoteEditor(true); };
+    setAuthLoaded(true);
+    return ()=>window.removeEventListener("resize",check);
+  },[]);
 
-  // ── MindMap ──
-  const updateNode = (id, text, expanded) => {
-    const walk = (n) => {
-      if (n.id === id) return { ...n, text, expanded: expanded !== undefined ? expanded : n.expanded };
-      return { ...n, children: n.children ? n.children.map(walk) : [] };
-    };
-    const u = walk(mindmap);
-    setMindmap(u); persist({ mindmap: u });
+  const persist=useCallback((patch)=>{
+    const next={user,tasks,notes,mindmap,...patch};
+    save(next);
+  },[user,tasks,notes,mindmap]);
+
+  const handleLogin=(u)=>{ setUser(u); save({user:u,tasks,notes,mindmap}); };
+  const handleLogout=()=>{ setUser(null); save({user:null,tasks,notes,mindmap}); };
+
+  const addTask=()=>{
+    if(!newTask.text.trim())return;
+    const u={...tasks,[newTask.pillar]:{...tasks[newTask.pillar],[newTask.quadrant]:[...tasks[newTask.pillar][newTask.quadrant],{id:Date.now(),text:newTask.text.trim(),done:false}]}};
+    setTasks(u); persist({tasks:u}); setNewTask({text:"",pillar:activePillar,quadrant:"do"}); setShowTaskModal(false);
   };
-  const deleteNode = (id) => {
-    const walk = (n) => ({ ...n, children: n.children ? n.children.filter(c => c.id !== id).map(walk) : [] });
-    const u = walk(mindmap);
-    setMindmap(u); persist({ mindmap: u });
+  const toggleTask=(pl,q,id)=>{ const u={...tasks,[pl]:{...tasks[pl],[q]:tasks[pl][q].map(t=>t.id===id?{...t,done:!t.done}:t)}}; setTasks(u); persist({tasks:u}); };
+  const removeTask=(pl,q,id)=>{ const u={...tasks,[pl]:{...tasks[pl],[q]:tasks[pl][q].filter(t=>t.id!==id)}}; setTasks(u); persist({tasks:u}); };
+
+  const saveNote=(data)=>{
+    let u;
+    if(editingNote&&editingNote!=="new") u=notes.map(n=>n.id===editingNote.id?{...n,...data}:n);
+    else u=[{id:Date.now(),pinned:false,createdAt:Date.now(),...data},...notes];
+    setNotes(u); persist({notes:u}); setShowNoteEditor(false); setEditingNote(null);
   };
-  const addNode = (parentId, text) => {
-    const newNode = { id: `n${Date.now()}`, text, expanded: true, children: [] };
-    const walk = (n) => {
-      if (n.id === parentId) return { ...n, expanded: true, children: [...(n.children || []), newNode] };
-      return { ...n, children: n.children ? n.children.map(walk) : [] };
-    };
-    const u = walk(mindmap);
-    setMindmap(u); persist({ mindmap: u });
+  const deleteNote=(id)=>{ const u=notes.filter(n=>n.id!==id); setNotes(u); persist({notes:u}); };
+  const togglePin=(id)=>{ const u=notes.map(n=>n.id===id?{...n,pinned:!n.pinned}:n); setNotes(u); persist({notes:u}); };
+
+  const updateNode=(id,text,expanded)=>{
+    const walk=n=>n.id===id?{...n,text,expanded:expanded!==undefined?expanded:n.expanded}:{...n,children:n.children?n.children.map(walk):[]};
+    const u=walk(mindmap); setMindmap(u); persist({mindmap:u});
+  };
+  const deleteNode=(id)=>{
+    const walk=n=>({...n,children:n.children?n.children.filter(c=>c.id!==id).map(walk):[]});
+    const u=walk(mindmap); setMindmap(u); persist({mindmap:u});
+  };
+  const addNode=(pid,text)=>{
+    const nn={id:`n${Date.now()}`,text,expanded:true,children:[]};
+    const walk=n=>n.id===pid?{...n,expanded:true,children:[...(n.children||[]),nn]}:{...n,children:n.children?n.children.map(walk):[]};
+    const u=walk(mindmap); setMindmap(u); persist({mindmap:u});
   };
 
-  // ── Derived ──
-  const allTasks  = Object.values(tasks).flatMap(p => Object.values(p).flat());
-  const doneTasks = allTasks.filter(t => t.done).length;
-  const pct       = allTasks.length ? Math.round((doneTasks / allTasks.length) * 100) : 0;
-  const pillar    = PILLARS.find(p => p.id === activePillar);
+  const allTasks=Object.values(tasks).flatMap(p=>Object.values(p).flat());
+  const done=allTasks.filter(t=>t.done).length;
+  const pct=allTasks.length?Math.round((done/allTasks.length)*100):0;
+  const pillar=PILLARS.find(p=>p.id===activePillar);
 
-  const filteredNotes = notes
-    .filter(n => noteFilter === "All" || n.category === noteFilter)
-    .filter(n => !noteSearch || n.title.toLowerCase().includes(noteSearch.toLowerCase()) || n.content.toLowerCase().includes(noteSearch.toLowerCase()))
-    .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt);
+  const selPillar=(id)=>{ setActivePillar(id); if(isMobile) setSidebarOpen(false); };
+  const selSection=(s)=>{ setActiveSection(s); if(isMobile) setSidebarOpen(false); };
 
-  const selectPillar  = (id) => { setActivePillar(id); if (isMobile) setSidebarOpen(false); };
-  const selectSection = (s)  => { setActiveSection(s); if (isMobile) setSidebarOpen(false); };
+  const filtered=notes
+    .filter(n=>noteFilter==="All"||n.category===noteFilter)
+    .filter(n=>!noteSearch||n.title.toLowerCase().includes(noteSearch.toLowerCase())||n.content.toLowerCase().includes(noteSearch.toLowerCase()))
+    .sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt);
 
-  // ── Loading / Login guard ──
-  if (!authLoaded) return (
-    <div style={{ background: "#07070f", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#4d9eff", fontFamily: "monospace", fontSize: 12, letterSpacing: 3 }}>LOADING...</div>
-  );
-  if (!user) return <LoginScreen onLogin={handleLogin} isMobile={isMobile} />;
+  const sectionColor=activeSection==="tasks"?pillar.color:activeSection==="notes"?"#00d97e":"#b57bff";
+  const sectionGlow =activeSection==="tasks"?pillar.glow:activeSection==="notes"?"rgba(0,217,126,0.2)":"rgba(181,123,255,0.2)";
 
-  // ── Quadrant Card ──
-  const QuadrantCard = ({ q }) => {
-    const qTasks = tasks[activePillar][q.id];
-    const qDone  = qTasks.filter(t => t.done).length;
+  if(!authLoaded) return <div style={{background:"#07070f",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:"#4d9eff",fontFamily:"monospace",fontSize:12,letterSpacing:3}}>LOADING...</div>;
+  if(!user) return <LoginScreen onLogin={handleLogin} isMobile={isMobile}/>;
+
+  /* Quadrant card */
+  const QCard=({q})=>{
+    const qt=tasks[activePillar][q.id], qd=qt.filter(t=>t.done).length;
     return (
-      <div style={{ background: q.bg, border: `1px solid ${q.border}`, borderRadius: 14, display: "flex", flexDirection: "column", overflow: isMobile ? "visible" : "hidden", height: isMobile ? "auto" : "100%" }}>
-        <div style={{ padding: "11px 13px 8px", borderBottom: `1px solid ${q.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{background:q.bg,border:`1px solid ${q.border}`,borderRadius:14,display:"flex",flexDirection:"column",overflow:isMobile?"visible":"hidden",height:isMobile?"auto":"100%"}}>
+        <div style={{padding:"11px 13px 8px",borderBottom:`1px solid ${q.border}`}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: q.color }}>{q.name}</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#383860", marginTop: 1 }}>{q.label}</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:16,color:q.color}}>{q.name}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#383860",marginTop:1}}>{q.label}</div>
             </div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, padding: "2px 8px", borderRadius: 20, border: `1px solid ${q.color}40`, color: q.color, fontWeight: 700 }}>{qDone}/{qTasks.length}</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,padding:"2px 8px",borderRadius:20,border:`1px solid ${q.color}40`,color:q.color,fontWeight:700}}>{qd}/{qt.length}</div>
           </div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#252545", marginTop: 3 }}>{q.hint}</div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#252545",marginTop:3}}>{q.hint}</div>
         </div>
-        <div style={{ flex: isMobile ? "none" : 1, overflowY: isMobile ? "visible" : "auto", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 5 }}>
-          {qTasks.length === 0 && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "16px 0", gap: 4, color: "#1e1e35", fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, textAlign: "center" }}>
-              <span style={{ fontSize: 14 }}>✦</span><span>Tap + to add a task</span>
-            </div>
-          )}
-          {qTasks.map(task => (
-            <div key={task.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", opacity: task.done ? 0.42 : 1, transition: "opacity 0.2s" }}>
-              <button onClick={() => toggleTask(activePillar, q.id, task.id)} style={{ width: 19, height: 19, borderRadius: 5, border: `1.5px solid ${q.color}`, background: task.done ? q.color : "transparent", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1, transition: "all 0.2s" }}>
-                {task.done && <Check size={10} color="#000" strokeWidth={3} />}
+        <div style={{flex:isMobile?"none":1,overflowY:isMobile?"visible":"auto",padding:"8px 10px",display:"flex",flexDirection:"column",gap:5}}>
+          {qt.length===0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 0",gap:4,color:"#1e1e35",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,textAlign:"center"}}><span style={{fontSize:14}}>✦</span><span>Tap + to add a task</span></div>}
+          {qt.map(task=>(
+            <div key={task.id} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",opacity:task.done?0.42:1,transition:"opacity 0.2s"}}>
+              <button onClick={()=>toggleTask(activePillar,q.id,task.id)} style={{width:19,height:19,borderRadius:5,border:`1.5px solid ${q.color}`,background:task.done?q.color:"transparent",flexShrink:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:1,transition:"all 0.2s"}}>
+                {task.done&&<Check size={10} color="#000" strokeWidth={3}/>}
               </button>
-              <span style={{ flex: 1, fontSize: 13, lineHeight: 1.55, color: "#c0c0d8", textDecoration: task.done ? "line-through" : "none", fontFamily: "'Outfit', sans-serif", wordBreak: "break-word" }}>{task.text}</span>
-              <button onClick={() => removeTask(activePillar, q.id, task.id)} style={{ background: "transparent", border: "none", color: "#1e1e35", cursor: "pointer", padding: 2, borderRadius: 4, flexShrink: 0, marginTop: 2, transition: "color 0.15s" }}
-                onMouseEnter={e => e.currentTarget.style.color = "#ff4d7e"} onMouseLeave={e => e.currentTarget.style.color = "#1e1e35"}>
-                <X size={12} />
-              </button>
+              <span style={{flex:1,fontSize:13,lineHeight:1.55,color:"#c0c0d8",textDecoration:task.done?"line-through":"none",wordBreak:"break-word"}}>{task.text}</span>
+              <button onClick={()=>removeTask(activePillar,q.id,task.id)} style={{background:"transparent",border:"none",color:"#1e1e35",cursor:"pointer",padding:2,borderRadius:4,flexShrink:0,marginTop:2,transition:"color 0.15s"}}
+                onMouseEnter={e=>e.currentTarget.style.color="#ff4d7e"} onMouseLeave={e=>e.currentTarget.style.color="#1e1e35"}><X size={12}/></button>
             </div>
           ))}
         </div>
@@ -693,260 +529,189 @@ export default function App() {
     );
   };
 
-  // ── Sidebar sections config ──
-  const SECTIONS = [
-    { id: "tasks",   label: "Dashboard",  Icon: LayoutDashboard, color: "#4d9eff" },
-    { id: "notes",   label: "Notes",      Icon: FileText,        color: "#00d97e" },
-    { id: "mindmap", label: "Mind Map",   Icon: GitBranch,       color: "#b57bff" },
-  ];
-
-  // ─── RENDER ────────────────────────────────────────────────
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#07070f", color: "#dde0f0", fontFamily: "'Outfit', sans-serif", overflow: "hidden", position: "relative" }}>
+    <div style={{display:"flex",height:"100vh",background:"#07070f",color:"#dde0f0",fontFamily:"'Outfit',sans-serif",overflow:"hidden",position:"relative"}}>
 
-      {/* Ambient glow */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-        <div style={{ position: "absolute", top: "-20%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(circle, ${activeSection === "tasks" ? pillar.glow : activeSection === "notes" ? "rgba(0,217,126,0.15)" : "rgba(181,123,255,0.15)"} 0%, transparent 65%)`, transition: "background 0.7s" }} />
-        <div style={{ position: "absolute", bottom: "-20%", right: "5%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.06) 0%, transparent 65%)" }} />
+      {/* Glow */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
+        <div style={{position:"absolute",top:"-20%",left:"-10%",width:500,height:500,borderRadius:"50%",background:`radial-gradient(circle,${sectionGlow} 0%,transparent 65%)`,transition:"background 0.7s"}}/>
+        <div style={{position:"absolute",bottom:"-20%",right:"5%",width:350,height:350,borderRadius:"50%",background:"radial-gradient(circle,rgba(251,191,36,0.06) 0%,transparent 65%)"}}/>
       </div>
 
       {/* Mobile backdrop */}
-      {isMobile && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 19, backdropFilter: "blur(4px)" }} />}
+      {isMobile&&sidebarOpen&&<div onClick={()=>setSidebarOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",zIndex:19,backdropFilter:"blur(4px)"}}/>}
 
-      {/* ── SIDEBAR ── */}
-      <aside style={{ width: isMobile ? (sidebarOpen ? "82vw" : 0) : (sidebarOpen ? 240 : 0), flexShrink: 0, background: "rgba(9,9,19,0.98)", borderRight: sidebarOpen ? "1px solid rgba(255,255,255,0.06)" : "none", display: "flex", flexDirection: "column", zIndex: isMobile ? 20 : 10, backdropFilter: "blur(24px)", overflow: "hidden", transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)", position: isMobile ? "fixed" : "relative", top: 0, left: 0, height: "100vh", boxShadow: (isMobile && sidebarOpen) ? "6px 0 40px rgba(0,0,0,0.7)" : "none" }}>
-        <div style={{ width: isMobile ? "82vw" : 240, height: "100%", display: "flex", flexDirection: "column", padding: sidebarOpen ? "16px 0" : 0, opacity: sidebarOpen ? 1 : 0, transition: "opacity 0.15s", pointerEvents: sidebarOpen ? "auto" : "none" }}>
+      {/* SIDEBAR */}
+      <aside style={{width:isMobile?(sidebarOpen?"82vw":0):(sidebarOpen?240:0),flexShrink:0,background:"rgba(9,9,19,0.98)",borderRight:sidebarOpen?"1px solid rgba(255,255,255,0.06)":"none",display:"flex",flexDirection:"column",zIndex:isMobile?20:10,backdropFilter:"blur(24px)",overflow:"hidden",transition:"width 0.3s cubic-bezier(0.4,0,0.2,1)",position:isMobile?"fixed":"relative",top:0,left:0,height:"100vh",boxShadow:(isMobile&&sidebarOpen)?"6px 0 40px rgba(0,0,0,0.7)":"none"}}>
+        <div style={{width:isMobile?"82vw":240,height:"100%",display:"flex",flexDirection:"column",padding:sidebarOpen?"16px 0":0,opacity:sidebarOpen?1:0,transition:"opacity 0.15s",pointerEvents:sidebarOpen?"auto":"none"}}>
 
-          {/* Logo + close */}
-          <div style={{ padding: "0 16px 14px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          {/* Logo */}
+          <div style={{padding:"0 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.05)",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#fff", letterSpacing: 3 }}>{user.name.toUpperCase()}</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#252548", letterSpacing: 3, marginTop: 2 }}>LIFE OPERATING SYSTEM</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#303055", marginTop: 5 }}>{today}</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:"#fff",letterSpacing:3}}>{user.name.toUpperCase()}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#252548",letterSpacing:3,marginTop:2}}>LIFE OPERATING SYSTEM</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#303055",marginTop:5}}>{today}</div>
             </div>
-            {isMobile && (
-              <button onClick={() => setSidebarOpen(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#8080a0", cursor: "pointer", width: 30, height: 30, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ChevronLeft size={14} />
-              </button>
-            )}
+            {isMobile&&<button onClick={()=>setSidebarOpen(false)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"#8080a0",cursor:"pointer",width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}><ChevronLeft size={14}/></button>}
           </div>
 
           {/* Progress */}
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#404060", marginBottom: 6 }}>
-              <span>TASK PROGRESS</span><span style={{ color: "#4d9eff" }}>{pct}%</span>
+          <div style={{padding:"10px 16px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#404060",marginBottom:6}}>
+              <span>TASK PROGRESS</span><span style={{color:"#4d9eff"}}>{pct}%</span>
             </div>
-            <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#4d9eff,#b57bff)", borderRadius: 4, transition: "width 0.6s", boxShadow: "0 0 8px rgba(77,158,255,0.5)" }} />
+            <div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#4d9eff,#b57bff)",borderRadius:4,transition:"width 0.6s",boxShadow:"0 0 8px rgba(77,158,255,0.5)"}}/>
             </div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#252545", marginTop: 4 }}>{doneTasks}/{allTasks.length} done · {notes.length} notes</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#252545",marginTop:4}}>{done}/{allTasks.length} done · {notes.length} notes</div>
           </div>
 
           {/* Section tabs */}
-          <div style={{ padding: "10px 10px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#252545", letterSpacing: 2, marginBottom: 6, paddingLeft: 4 }}>SECTIONS</div>
-            {SECTIONS.map(s => (
-              <button key={s.id} onClick={() => selectSection(s.id)}
-                style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 9, border: `1px solid ${activeSection === s.id ? s.color + "35" : "transparent"}`, background: activeSection === s.id ? `${s.color}10` : "transparent", cursor: "pointer", width: "100%", textAlign: "left", marginBottom: 2, transition: "all 0.2s" }}>
-                <s.Icon size={14} color={activeSection === s.id ? s.color : "#404065"} strokeWidth={1.5} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: activeSection === s.id ? s.color : "#7070a0" }}>{s.label}</span>
+          <div style={{padding:"10px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#252545",letterSpacing:2,marginBottom:6,paddingLeft:4}}>SECTIONS</div>
+            {SECTIONS.map(s=>(
+              <button key={s.id} onClick={()=>selSection(s.id)} style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:9,border:`1px solid ${activeSection===s.id?s.color+"35":"transparent"}`,background:activeSection===s.id?`${s.color}10`:"transparent",cursor:"pointer",width:"100%",textAlign:"left",marginBottom:2,transition:"all 0.2s"}}>
+                <s.Icon size={14} color={activeSection===s.id?s.color:"#404065"} strokeWidth={1.5}/>
+                <span style={{fontSize:12,fontWeight:600,color:activeSection===s.id?s.color:"#7070a0"}}>{s.label}</span>
               </button>
             ))}
           </div>
 
-          {/* Pillar nav — only when on tasks section */}
-          {activeSection === "tasks" && (
-            <nav style={{ flex: 1, padding: "8px 8px", display: "flex", flexDirection: "column", gap: 2, overflowY: "auto" }}>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#252545", letterSpacing: 2, marginBottom: 4, paddingLeft: 4 }}>LIFE PILLARS</div>
-              {PILLARS.map(p => {
-                const isA = activePillar === p.id;
-                const pt  = Object.values(tasks[p.id]).flat();
-                const pd  = pt.filter(t => t.done).length;
+          {/* Pillars — only in tasks section */}
+          {activeSection==="tasks"&&(
+            <nav style={{flex:1,padding:"8px 8px",display:"flex",flexDirection:"column",gap:2,overflowY:"auto"}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#252545",letterSpacing:2,marginBottom:4,paddingLeft:4}}>LIFE PILLARS</div>
+              {PILLARS.map(p=>{
+                const isA=activePillar===p.id, pt=Object.values(tasks[p.id]).flat(), pd=pt.filter(t=>t.done).length;
                 return (
-                  <button key={p.id} onClick={() => selectPillar(p.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", borderRadius: 9, border: `1px solid ${isA ? p.color + "35" : "transparent"}`, background: isA ? p.bg : "transparent", cursor: "pointer", textAlign: "left", width: "100%", transition: "all 0.2s" }}>
-                    <p.Icon size={14} color={isA ? p.color : "#404065"} strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: isA ? p.color : "#7070a0" }}>{p.name}</div>
-                      <div style={{ fontSize: 7, color: "#252545", marginTop: 0.5, fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.subtitle}</div>
+                  <button key={p.id} onClick={()=>selPillar(p.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:9,border:`1px solid ${isA?p.color+"35":"transparent"}`,background:isA?p.bg:"transparent",cursor:"pointer",textAlign:"left",width:"100%",transition:"all 0.2s"}}>
+                    <p.Icon size={14} color={isA?p.color:"#404065"} strokeWidth={1.5} style={{flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:600,color:isA?p.color:"#7070a0"}}>{p.name}</div>
+                      <div style={{fontSize:7,color:"#252545",marginTop:0.5,fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.subtitle}</div>
                     </div>
-                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, padding: "1px 6px", borderRadius: 20, background: isA ? p.color : "#14142a", color: isA ? "#000" : "#404060", fontWeight: 700, flexShrink: 0 }}>{pd}/{pt.length}</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,padding:"1px 6px",borderRadius:20,background:isA?p.color:"#14142a",color:isA?"#000":"#404060",fontWeight:700,flexShrink:0}}>{pd}/{pt.length}</div>
                   </button>
                 );
               })}
             </nav>
           )}
+          {activeSection!=="tasks"&&<div style={{flex:1}}/>}
 
-          {/* Spacer when not tasks */}
-          {activeSection !== "tasks" && <div style={{ flex: 1 }} />}
-
-          {/* User + Logout */}
-          <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.04)", display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#4d9eff,#b57bff)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <User size={13} color="#fff" />
+          {/* User */}
+          <div style={{padding:"10px 12px",borderTop:"1px solid rgba(255,255,255,0.04)",display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#4d9eff,#b57bff)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <User size={13} color="#fff"/>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#c0c0d8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-              <div style={{ fontSize: 8, color: "#303055", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:600,color:"#c0c0d8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.name}</div>
+              <div style={{fontSize:8,color:"#303055",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
             </div>
-            <button onClick={handleLogout} title="Sign out" style={{ background: "transparent", border: "none", color: "#303055", cursor: "pointer", padding: 4, borderRadius: 6, transition: "color 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#ff4d7e"} onMouseLeave={e => e.currentTarget.style.color = "#303055"}>
-              <LogOut size={13} />
-            </button>
+            <button onClick={handleLogout} style={{background:"transparent",border:"none",color:"#303055",cursor:"pointer",padding:4,borderRadius:6,transition:"color 0.15s"}}
+              onMouseEnter={e=>e.currentTarget.style.color="#ff4d7e"} onMouseLeave={e=>e.currentTarget.style.color="#303055"}><LogOut size={13}/></button>
           </div>
         </div>
       </aside>
 
-      {/* Desktop sidebar toggle */}
-      {!isMobile && (
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: "fixed", left: sidebarOpen ? 232 : 0, top: "50%", transform: "translateY(-50%)", width: 18, height: 48, borderRadius: "0 8px 8px 0", background: "rgba(18,18,36,0.98)", border: "1px solid rgba(255,255,255,0.07)", borderLeft: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 30, transition: "left 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
-          {sidebarOpen ? <ChevronLeft size={11} color="#606080" /> : <ChevronRight size={11} color="#606080" />}
+      {/* Desktop toggle tab */}
+      {!isMobile&&(
+        <button onClick={()=>setSidebarOpen(!sidebarOpen)} style={{position:"fixed",left:sidebarOpen?232:0,top:"50%",transform:"translateY(-50%)",width:18,height:48,borderRadius:"0 8px 8px 0",background:"rgba(18,18,36,0.98)",border:"1px solid rgba(255,255,255,0.07)",borderLeft:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:30,transition:"left 0.3s cubic-bezier(0.4,0,0.2,1)"}}>
+          {sidebarOpen?<ChevronLeft size={11} color="#606080"/>:<ChevronRight size={11} color="#606080"/>}
         </button>
       )}
 
-      {/* ── MAIN ── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1, minWidth: 0 }}>
+      {/* MAIN */}
+      <main style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,minWidth:0}}>
 
-        {/* Sticky header */}
-        <header style={{ padding: isMobile ? "11px 12px 9px" : "14px 20px 9px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "rgba(7,7,15,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.04)", position: "sticky", top: 0, zIndex: 5, flexShrink: 0 }}>
+        {/* Header */}
+        <header style={{padding:isMobile?"11px 12px 9px":"14px 20px 9px",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",background:"rgba(7,7,15,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.04)",position:"sticky",top:0,zIndex:5,flexShrink:0}}>
+          {isMobile&&<button onClick={()=>setSidebarOpen(true)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Menu size={15} color="#a0a0c0"/></button>}
 
-          {isMobile && (
-            <button onClick={() => setSidebarOpen(true)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Menu size={15} color="#a0a0c0" />
-            </button>
-          )}
-
-          {/* Section title */}
-          {activeSection === "tasks" && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: pillar.bg, border: `1px solid ${pillar.color}30`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 14px ${pillar.glow}`, flexShrink: 0 }}>
-                  <pillar.Icon size={16} color={pillar.color} strokeWidth={1.5} />
+          {activeSection==="tasks"&&(<>
+            <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0}}>
+              <div style={{width:34,height:34,borderRadius:9,background:pillar.bg,border:`1px solid ${pillar.color}30`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 14px ${pillar.glow}`,flexShrink:0}}>
+                <pillar.Icon size={16} color={pillar.color} strokeWidth={1.5}/>
+              </div>
+              <div style={{minWidth:0}}>
+                <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:isMobile?17:21,margin:0,color:pillar.color,lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{pillar.name} Pillar</h1>
+                <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#383860",margin:"2px 0 0",letterSpacing:1}}>{pillar.subtitle.toUpperCase()}</p>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:4,flexShrink:0}}>
+              {QUADRANTS.map(q=>{const qt=tasks[activePillar][q.id],qd=qt.filter(t=>t.done).length;return(
+                <div key={q.id} style={{padding:isMobile?"2px 6px":"3px 9px",borderRadius:6,background:q.bg,border:`1px solid ${q.border}`,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                  <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:6,color:q.color,fontWeight:700}}>{q.name.slice(0,3)}</span>
+                  <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:isMobile?9:11,color:"#fff",fontWeight:700}}>{qd}/{qt.length}</span>
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: isMobile ? 17 : 21, margin: 0, color: pillar.color, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pillar.name} Pillar</h1>
-                  <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#383860", margin: "2px 0 0", letterSpacing: 1 }}>{pillar.subtitle.toUpperCase()}</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                {QUADRANTS.map(q => {
-                  const qt = tasks[activePillar][q.id]; const qd = qt.filter(t => t.done).length;
-                  return (
-                    <div key={q.id} style={{ padding: isMobile ? "2px 6px" : "3px 9px", borderRadius: 6, background: q.bg, border: `1px solid ${q.border}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 6, color: q.color, fontWeight: 700 }}>{q.name.slice(0, 3)}</span>
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: isMobile ? 9 : 11, color: "#fff", fontWeight: 700 }}>{qd}/{qt.length}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
+              );})}
+            </div>
+          </>)}
 
-          {activeSection === "notes" && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(0,217,126,0.08)", border: "1px solid rgba(0,217,126,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <FileText size={16} color="#00d97e" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: isMobile ? 17 : 21, margin: 0, color: "#00d97e", lineHeight: 1.1 }}>Notes</h1>
-                  <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#383860", margin: "2px 0 0", letterSpacing: 1 }}>{notes.length} NOTES · {notes.filter(n => n.pinned).length} PINNED</p>
-                </div>
+          {activeSection==="notes"&&(<>
+            <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0}}>
+              <div style={{width:34,height:34,borderRadius:9,background:"rgba(0,217,126,0.08)",border:"1px solid rgba(0,217,126,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><FileText size={16} color="#00d97e" strokeWidth={1.5}/></div>
+              <div><h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:isMobile?17:21,margin:0,color:"#00d97e",lineHeight:1.1}}>Notes</h1>
+                <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#383860",margin:"2px 0 0",letterSpacing:1}}>{notes.length} NOTES · {notes.filter(n=>n.pinned).length} PINNED</p>
               </div>
-              {/* Search */}
-              <div style={{ position: "relative", flexShrink: 0 }}>
-                <Search size={12} color="#404060" style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }} />
-                <input value={noteSearch} onChange={e => setNoteSearch(e.target.value)} placeholder="Search..."
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 10px 6px 27px", color: "#c0c0d8", fontSize: 12, fontFamily: "'Outfit', sans-serif", outline: "none", width: isMobile ? 120 : 160 }} />
-              </div>
-            </>
-          )}
+            </div>
+            <div style={{position:"relative",flexShrink:0}}>
+              <Search size={12} color="#404060" style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)"}}/>
+              <input value={noteSearch} onChange={e=>setNoteSearch(e.target.value)} placeholder="Search..."
+                style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"6px 10px 6px 27px",color:"#c0c0d8",fontSize:12,outline:"none",width:isMobile?120:160}}/>
+            </div>
+          </>)}
 
-          {activeSection === "mindmap" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(181,123,255,0.08)", border: "1px solid rgba(181,123,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <GitBranch size={16} color="#b57bff" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: isMobile ? 17 : 21, margin: 0, color: "#b57bff", lineHeight: 1.1 }}>Mind Map</h1>
-                <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: "#383860", margin: "2px 0 0", letterSpacing: 1 }}>DOUBLE-CLICK NODE TO EDIT · + TO ADD CHILD</p>
+          {activeSection==="mindmap"&&(
+            <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0}}>
+              <div style={{width:34,height:34,borderRadius:9,background:"rgba(181,123,255,0.08)",border:"1px solid rgba(181,123,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GitBranch size={16} color="#b57bff" strokeWidth={1.5}/></div>
+              <div><h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:isMobile?17:21,margin:0,color:"#b57bff",lineHeight:1.1}}>Mind Map</h1>
+                <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,color:"#383860",margin:"2px 0 0",letterSpacing:1}}>DOUBLE-CLICK TO EDIT · + ADD CHILD · − DELETE</p>
               </div>
             </div>
           )}
         </header>
 
-        {/* ─── SECTION CONTENT ─── */}
-        <div style={{ flex: 1, overflowY: "auto", position: "relative", zIndex: 1 }}>
+        {/* CONTENT */}
+        <div style={{flex:1,overflowY:"auto",position:"relative",zIndex:1}}>
 
-          {/* TASKS */}
-          {activeSection === "tasks" && (
-            <div style={{ padding: isMobile ? "10px 12px 100px" : "12px 20px 20px", ...(isMobile ? { display: "flex", flexDirection: "column", gap: 10 } : { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: 12, height: "calc(100% - 0px)" }) }}>
-              {QUADRANTS.map(q => <QuadrantCard key={q.id} q={q} />)}
+          {activeSection==="tasks"&&(
+            <div style={{padding:isMobile?"10px 12px 100px":"12px 20px 20px",...(isMobile?{display:"flex",flexDirection:"column",gap:10}:{display:"grid",gridTemplateColumns:"1fr 1fr",gridTemplateRows:"1fr 1fr",gap:12,height:"calc(100%)"})}}>
+              {QUADRANTS.map(q=><QCard key={q.id} q={q}/>)}
             </div>
           )}
 
-          {/* NOTES */}
-          {activeSection === "notes" && (
-            <div style={{ padding: isMobile ? "10px 12px 100px" : "12px 20px 80px" }}>
-              {/* Category filter */}
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                {NOTE_CATEGORIES.map(c => (
-                  <button key={c} onClick={() => setNoteFilter(c)}
-                    style={{ padding: "4px 12px", borderRadius: 20, border: `1px solid ${noteFilter === c ? "#00d97e" : "rgba(255,255,255,0.08)"}`, background: noteFilter === c ? "rgba(0,217,126,0.12)" : "transparent", color: noteFilter === c ? "#00d97e" : "#606080", fontSize: 11, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontWeight: noteFilter === c ? 600 : 400, transition: "all 0.2s" }}>
-                    {c}
-                  </button>
+          {activeSection==="notes"&&(
+            <div style={{padding:isMobile?"10px 12px 100px":"12px 20px 80px"}}>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+                {NOTE_CATS.map(c=>(
+                  <button key={c} onClick={()=>setNoteFilter(c)} style={{padding:"4px 12px",borderRadius:20,border:`1px solid ${noteFilter===c?"#00d97e":"rgba(255,255,255,0.08)"}`,background:noteFilter===c?"rgba(0,217,126,0.12)":"transparent",color:noteFilter===c?"#00d97e":"#606080",fontSize:11,cursor:"pointer",fontWeight:noteFilter===c?600:400,transition:"all 0.2s"}}>{c}</button>
                 ))}
               </div>
-
-              {/* Pinned */}
-              {filteredNotes.some(n => n.pinned) && (
-                <>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#303055", letterSpacing: 2, marginBottom: 8 }}>PINNED</div>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 10, marginBottom: 16 }}>
-                    {filteredNotes.filter(n => n.pinned).map(n => (
-                      <NoteCard key={n.id} note={n} onEdit={openNoteEdit} onDelete={deleteNote} onTogglePin={togglePin} isMobile={isMobile} />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Other */}
-              {filteredNotes.some(n => !n.pinned) && (
-                <>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#303055", letterSpacing: 2, marginBottom: 8 }}>NOTES</div>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
-                    {filteredNotes.filter(n => !n.pinned).map(n => (
-                      <NoteCard key={n.id} note={n} onEdit={openNoteEdit} onDelete={deleteNote} onTogglePin={togglePin} isMobile={isMobile} />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {filteredNotes.length === 0 && (
-                <div style={{ textAlign: "center", padding: "60px 20px", color: "#1e1e35", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11 }}>
-                  <div style={{ fontSize: 28, marginBottom: 10 }}>📝</div>
-                  <div>No notes yet. Tap + to create one.</div>
+              {filtered.some(n=>n.pinned)&&(<>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#303055",letterSpacing:2,marginBottom:8}}>PINNED</div>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(240px,1fr))",gap:10,marginBottom:16}}>
+                  {filtered.filter(n=>n.pinned).map(n=><NoteCard key={n.id} note={n} onEdit={n=>{setEditingNote(n);setShowNoteEditor(true);}} onDelete={deleteNote} onTogglePin={togglePin}/>)}
                 </div>
-              )}
+              </>)}
+              {filtered.some(n=>!n.pinned)&&(<>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#303055",letterSpacing:2,marginBottom:8}}>NOTES</div>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(240px,1fr))",gap:10}}>
+                  {filtered.filter(n=>!n.pinned).map(n=><NoteCard key={n.id} note={n} onEdit={n=>{setEditingNote(n);setShowNoteEditor(true);}} onDelete={deleteNote} onTogglePin={togglePin}/>)}
+                </div>
+              </>)}
+              {filtered.length===0&&<div style={{textAlign:"center",padding:"60px 20px",color:"#1e1e35",fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}><div style={{fontSize:28,marginBottom:10}}>📝</div><div>No notes yet. Tap + to create one.</div></div>}
             </div>
           )}
 
-          {/* MINDMAP */}
-          {activeSection === "mindmap" && (
-            <div style={{ padding: isMobile ? "12px 14px 100px" : "16px 24px 80px" }}>
-              <div style={{ background: "rgba(181,123,255,0.04)", border: "1px solid rgba(181,123,255,0.12)", borderRadius: 14, padding: "16px 14px", marginBottom: 12 }}>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#383860", letterSpacing: 1, marginBottom: 10 }}>
-                  DOUBLE-CLICK any node to edit · Click + to add child · Click − to delete
-                </div>
-                <MindNode node={mindmap} depth={0} onUpdate={updateNode} onDelete={deleteNode} onAdd={addNode} isRoot={true} />
+          {activeSection==="mindmap"&&(
+            <div style={{padding:isMobile?"12px 14px 100px":"16px 24px 80px"}}>
+              <div style={{background:"rgba(181,123,255,0.04)",border:"1px solid rgba(181,123,255,0.12)",borderRadius:14,padding:"16px 14px",marginBottom:12}}>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#383860",letterSpacing:1,marginBottom:10}}>DOUBLE-CLICK any node to rename · Click + to add child · Click − to delete</div>
+                <MindNode node={mindmap} depth={0} onUpdate={updateNode} onDelete={deleteNode} onAdd={addNode} isRoot={true}/>
               </div>
-
-              {/* Add root-level branch */}
-              <button onClick={() => addNode("root", "New Branch")}
-                style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 9, border: "1px solid rgba(181,123,255,0.25)", background: "rgba(181,123,255,0.06)", color: "#b57bff", cursor: "pointer", fontSize: 12, fontFamily: "'Outfit', sans-serif", fontWeight: 600, transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(181,123,255,0.12)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(181,123,255,0.06)"}>
-                <Plus size={13} /> Add Branch
+              <button onClick={()=>addNode("root","New Branch")} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:9,border:"1px solid rgba(181,123,255,0.25)",background:"rgba(181,123,255,0.06)",color:"#b57bff",cursor:"pointer",fontSize:12,fontWeight:600,transition:"all 0.2s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(181,123,255,0.12)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(181,123,255,0.06)"}>
+                <Plus size={13}/> Add Branch
               </button>
             </div>
           )}
@@ -954,61 +719,61 @@ export default function App() {
       </main>
 
       {/* FAB */}
-      <button
-        onClick={() => {
-          if (activeSection === "tasks") { setShowTaskModal(true); setNewTask({ text: "", pillar: activePillar, quadrant: "do" }); }
-          else if (activeSection === "notes") openNewNote();
-          else addNode("root", "New Branch");
-        }}
-        style={{ position: "fixed", bottom: 22, right: 22, width: 52, height: 52, borderRadius: "50%", border: "none", cursor: "pointer", background: activeSection === "tasks" ? pillar.color : activeSection === "notes" ? "#00d97e" : "#b57bff", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, boxShadow: `0 0 26px ${activeSection === "tasks" ? pillar.glow : activeSection === "notes" ? "rgba(0,217,126,0.3)" : "rgba(181,123,255,0.3)"}, 0 6px 16px rgba(0,0,0,0.5)`, transition: "all 0.3s" }}
-        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-        <Plus size={22} color="#000" strokeWidth={2.5} />
+      <button onClick={()=>{
+        if(activeSection==="tasks"){setShowTaskModal(true);setNewTask({text:"",pillar:activePillar,quadrant:"do"});}
+        else if(activeSection==="notes"){setEditingNote("new");setShowNoteEditor(true);}
+        else addNode("root","New Branch");
+      }} style={{position:"fixed",bottom:22,right:22,width:52,height:52,borderRadius:"50%",border:"none",cursor:"pointer",background:sectionColor,display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,boxShadow:`0 0 26px ${sectionGlow},0 6px 16px rgba(0,0,0,0.5)`,transition:"all 0.3s"}}
+        onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+        <Plus size={22} color="#000" strokeWidth={2.5}/>
       </button>
 
       {/* TASK MODAL */}
-      {showTaskModal && (
-        <div onClick={() => setShowTaskModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(12px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 2000, padding: isMobile ? 0 : 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0c0c1c", border: "1px solid rgba(255,255,255,0.08)", borderRadius: isMobile ? "18px 18px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 440, boxShadow: "0 40px 80px rgba(0,0,0,0.7)", paddingBottom: isMobile ? 20 : 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      {showTaskModal&&(
+        <div onClick={()=>setShowTaskModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",backdropFilter:"blur(12px)",display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",zIndex:2000,padding:isMobile?0:20}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#0c0c1c",border:"1px solid rgba(255,255,255,0.08)",borderRadius:isMobile?"18px 18px 0 0":18,width:"100%",maxWidth:isMobile?"100%":440,paddingBottom:isMobile?20:0}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
               <div>
-                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#e0e0f0" }}>Add New Task</div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#383860", marginTop: 2, letterSpacing: 1 }}>DEFINE YOUR NEXT ACTION</div>
+                <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:"#e0e0f0"}}>Add New Task</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#383860",marginTop:2,letterSpacing:1}}>DEFINE YOUR NEXT ACTION</div>
               </div>
-              <button onClick={() => setShowTaskModal(false)} style={{ background: "rgba(255,255,255,0.05)", border: "none", color: "#505070", cursor: "pointer", width: 28, height: 28, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <X size={14} />
-              </button>
+              <button onClick={()=>setShowTaskModal(false)} style={{background:"rgba(255,255,255,0.05)",border:"none",color:"#505070",cursor:"pointer",width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center"}}><X size={14}/></button>
             </div>
-            <div style={{ padding: "14px 18px 16px", display: "flex", flexDirection: "column", gap: 11 }}>
+            <div style={{padding:"14px 18px 16px",display:"flex",flexDirection:"column",gap:11}}>
               <div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#383860", letterSpacing: 1, marginBottom: 5 }}>TASK</div>
-                <input autoFocus value={newTask.text} onChange={e => setNewTask({ ...newTask, text: e.target.value })} onKeyDown={e => e.key === "Enter" && addTask()} placeholder="What needs to be done?"
-                  style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, padding: "10px 12px", color: "#e0e0f0", fontSize: 13, fontFamily: "'Outfit', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#383860",letterSpacing:1,marginBottom:5}}>TASK</div>
+                <input autoFocus value={newTask.text} onChange={e=>setNewTask({...newTask,text:e.target.value})} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="What needs to be done?"
+                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:9,padding:"10px 12px",color:"#e0e0f0",fontSize:13,outline:"none",boxSizing:"border-box"}}/>
               </div>
-              <div style={{ display: "flex", gap: 9 }}>
-                {[["PILLAR", "pillar", PILLARS.map(p => ({ v: p.id, l: p.name }))], ["QUADRANT", "quadrant", QUADRANTS.map(q => ({ v: q.id, l: q.name }))]].map(([label, key, opts]) => (
-                  <div key={key} style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#383860", letterSpacing: 1, marginBottom: 5 }}>{label}</div>
-                    <select value={newTask[key]} onChange={e => setNewTask({ ...newTask, [key]: e.target.value })}
-                      style={{ width: "100%", background: "#111126", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, padding: "9px 10px", color: "#e0e0f0", fontSize: 12, fontFamily: "'Outfit', sans-serif", outline: "none", cursor: "pointer" }}>
-                      {opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+              <div style={{display:"flex",gap:9}}>
+                {[["PILLAR","pillar",PILLARS.map(p=>({v:p.id,l:p.name}))],["QUADRANT","quadrant",QUADRANTS.map(q=>({v:q.id,l:q.name}))]].map(([label,key,opts])=>(
+                  <div key={key} style={{flex:1}}>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#383860",letterSpacing:1,marginBottom:5}}>{label}</div>
+                    <select value={newTask[key]} onChange={e=>setNewTask({...newTask,[key]:e.target.value})}
+                      style={{width:"100%",background:"#111126",border:"1px solid rgba(255,255,255,0.08)",borderRadius:9,padding:"9px 10px",color:"#e0e0f0",fontSize:12,outline:"none",cursor:"pointer"}}>
+                      {opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
                     </select>
                   </div>
                 ))}
               </div>
-              <button onClick={addTask} style={{ background: PILLARS.find(p => p.id === newTask.pillar)?.color || "#4d9eff", border: "none", borderRadius: 9, padding: "11px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#000", fontFamily: "'Outfit', sans-serif" }}>
-                <Plus size={14} strokeWidth={2.5} /> Add Task
+              <button onClick={addTask} style={{background:PILLARS.find(p=>p.id===newTask.pillar)?.color||"#4d9eff",border:"none",borderRadius:9,padding:"11px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,color:"#000"}}>
+                <Plus size={14} strokeWidth={2.5}/> Add Task
               </button>
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "#1e1e35", textAlign: "center", margin: 0 }}>Press Enter ↵ to quickly add</p>
+              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#1e1e35",textAlign:"center",margin:0}}>Press Enter ↵ to quickly add</p>
             </div>
           </div>
         </div>
       )}
 
       {/* NOTE EDITOR */}
-      {showNoteEditor && (
-        <NoteEditor note={editingNote === "new" ? null : editingNote} onSave={saveNote} onClose={() => { setShowNoteEditor(false); setEditingNote(null); }} isMobile={isMobile} />
+      {showNoteEditor&&(
+        <NoteEditor note={editingNote==="new"?null:editingNote} onSave={saveNote} onClose={()=>{setShowNoteEditor(false);setEditingNote(null);}} isMobile={isMobile}/>
       )}
     </div>
   );
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
